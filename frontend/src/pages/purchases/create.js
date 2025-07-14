@@ -169,6 +169,13 @@ const PurchaseCreate = () => {
     setSaving(false);
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto px-6 min-h-[60vh] flex items-center justify-center">
+        <div className="text-xl text-center">Loading...</div>
+      </div>
+    );
+  }
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-5xl mx-auto px-6">

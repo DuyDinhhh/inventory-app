@@ -1,16 +1,34 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
+import { toast } from "react-toastify";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isPagesMenuOpen, setIsPagesMenuOpen] = useState(false);
   const [isSettingMenuOpen, setIsSettingMenuOpen] = useState(false);
+  const [isOrderMenuOpen, setIsOrderMenuOpen] = useState(false);
+  const [isPurchaseMenuOpen, setIsPurchaseMenuOpen] = useState(false);
 
+  const { user, setUser } = useUser();
+  const navigate = useNavigate();
   const location = useLocation();
 
-  // Refs for dropdowns to detect outside click
+  const orderRef = useRef(null);
+  const purchaseRef = useRef(null);
   const playlistsRef = useRef(null);
   const deviceRef = useRef(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        setUser(null);
+      }
+    }
+  }, [setUser]);
 
   // Close dropdowns if clicking outside
   useEffect(() => {
@@ -24,6 +42,12 @@ const Header = () => {
       if (deviceRef.current && !deviceRef.current.contains(event.target)) {
         setIsSettingMenuOpen(false);
       }
+      if (orderRef.current && !orderRef.current.contains(event.target)) {
+        setIsOrderMenuOpen(false);
+      }
+      if (purchaseRef.current && !purchaseRef.current.contains(event.target)) {
+        setIsPurchaseMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside, true);
     return () => {
@@ -36,24 +60,63 @@ const Header = () => {
     setMobileMenuOpen(false);
     setIsPagesMenuOpen(false);
     setIsSettingMenuOpen(false);
+    setIsOrderMenuOpen(false);
+    setIsPurchaseMenuOpen(false);
   }, [location.pathname]);
 
-  // If one dropdown opens, close the other
+  // If one dropdown opens, close the others
   const handlePlaylistsToggle = () => {
     setIsPagesMenuOpen((open) => {
-      if (!open) setIsSettingMenuOpen(false);
+      if (!open) {
+        setIsSettingMenuOpen(false);
+        setIsOrderMenuOpen(false);
+        setIsPurchaseMenuOpen(false);
+      }
       return !open;
     });
   };
   const handleDeviceToggle = () => {
     setIsSettingMenuOpen((open) => {
-      if (!open) setIsPagesMenuOpen(false);
+      if (!open) {
+        setIsPagesMenuOpen(false);
+        setIsOrderMenuOpen(false);
+        setIsPurchaseMenuOpen(false);
+      }
+      return !open;
+    });
+  };
+  const handleOrderToggle = () => {
+    setIsOrderMenuOpen((open) => {
+      if (!open) {
+        setIsPagesMenuOpen(false);
+        setIsSettingMenuOpen(false);
+        setIsPurchaseMenuOpen(false);
+      }
+      return !open;
+    });
+  };
+  const handlePurchaseToggle = () => {
+    setIsPurchaseMenuOpen((open) => {
+      if (!open) {
+        setIsPagesMenuOpen(false);
+        setIsSettingMenuOpen(false);
+        setIsOrderMenuOpen(false);
+      }
       return !open;
     });
   };
 
   const isActive = (path) =>
     location.pathname.toLowerCase().startsWith(path.toLowerCase());
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    toast.success("Logout successfully!", {
+      autoClose: 700,
+      onClose: () => navigate("/login"),
+    });
+  };
 
   return (
     <header className="z-10 pt-2 bg-white shadow-md">
@@ -65,18 +128,34 @@ const Header = () => {
           </Link>
         </div>
         <div className="flex items-center justify-end space-x-3 mb-1 w-full md:w-auto">
-          <Link
-            to="/login"
-            className="px-4 py-1 text-lg rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-          >
-            Login
-          </Link>
-          <Link
-            to="/register"
-            className="px-4 py-1 text-base rounded border border-blue-600 text-blue-600 font-semibold hover:bg-blue-50 transition"
-          >
-            Register
-          </Link>
+          {user ? (
+            <>
+              <span className="text-sm font-semibold text-gray-700">
+                Hi, {user.name || user.username || "User"}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-1 text-base rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="px-4 py-1 text-lg rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="px-4 py-1 text-base rounded border border-blue-600 text-blue-600 font-semibold hover:bg-blue-50 transition"
+              >
+                Register
+              </Link>
+            </>
+          )}
           <button
             className="md:hidden p-2 rounded focus:outline-none focus:shadow-outline-blue"
             aria-label="Menu"
@@ -120,6 +199,7 @@ const Header = () => {
                 : "hover:bg-blue-50 hover:text-blue-900"
             }`}
           >
+            {/* Dashboard Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -144,6 +224,7 @@ const Header = () => {
                 : "hover:bg-blue-50 hover:text-blue-900"
             }`}
           >
+            {/* Products Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -160,78 +241,182 @@ const Header = () => {
             </svg>
             <span className="ml-1">Products</span>
           </Link>
-          <Link
-            to="/orders"
-            className={`inline-flex items-center px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
-              isActive("/orders")
-                ? "bg-blue-100 text-blue-800"
-                : "hover:bg-blue-50 hover:text-blue-900"
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-6 text-black"
+          {/* Orders Dropdown */}
+          <div className="relative" ref={orderRef}>
+            <button
+              type="button"
+              className={`inline-flex items-center px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
+                isActive("/orders") ||
+                isActive("/pendingOrders") ||
+                isActive("/completeOrders")
+                  ? "bg-blue-100 text-blue-800"
+                  : "hover:bg-blue-50 hover:text-blue-900"
+              }`}
+              onClick={handleOrderToggle}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-              />
-            </svg>
-            <span className="ml-1">Orders</span>
-          </Link>
-          <Link
-            to="/purchases"
-            className={`inline-flex items-center px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
-              isActive("/purchases")
-                ? "bg-blue-100 text-blue-800"
-                : "hover:bg-blue-50 hover:text-blue-900"
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-6 text-black"
+              {/* Orders Icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-6 text-black"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                />
+              </svg>
+              <span className="ml-1">Orders</span>
+              <svg
+                className={`w-4 h-4 ml-1 transition-transform ${
+                  isOrderMenuOpen ? "rotate-180" : ""
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </button>
+            {isOrderMenuOpen && (
+              <div className="absolute left-0 mt-2 w-44 rounded-md shadow-lg bg-white z-50">
+                <ul className="py-1">
+                  <li>
+                    <Link
+                      to="/orders"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/orders") &&
+                        !isActive("/pendingOrders") &&
+                        !isActive("/completeOrders")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      All Orders
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/completeOrders"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/completeOrders")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      Completed
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/pendingOrders"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/pendingOrders")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      Pending
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+          {/* Purchases Dropdown */}
+          <div className="relative" ref={purchaseRef}>
+            <button
+              type="button"
+              className={`inline-flex items-center px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
+                isActive("/purchases") ||
+                isActive("/pendingPurchases") ||
+                isActive("/approvePurchases")
+                  ? "bg-blue-100 text-blue-800"
+                  : "hover:bg-blue-50 hover:text-blue-900"
+              }`}
+              onClick={handlePurchaseToggle}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-              />
-            </svg>
-            <span className="ml-1">Purchases</span>
-          </Link>
-          <Link
-            to="/quotations"
-            className={`inline-flex items-center px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
-              isActive("/quotations")
-                ? "bg-blue-100 text-blue-800"
-                : "hover:bg-blue-50 hover:text-blue-900"
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-6 text-black"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-              />
-            </svg>
-            <span className="ml-1">Quotations</span>
-          </Link>
+              {/* Purchases Icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-6 text-black"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
+                />
+              </svg>
+              <span className="ml-1">Purchases</span>
+              <svg
+                className={`w-4 h-4 ml-1 transition-transform ${
+                  isPurchaseMenuOpen ? "rotate-180" : ""
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </button>
+            {isPurchaseMenuOpen && (
+              <div className="absolute left-0 mt-2 w-44 rounded-md shadow-lg bg-white z-50">
+                <ul className="py-1">
+                  <li>
+                    <Link
+                      to="/purchases"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/purchases") &&
+                        !isActive("/pendingPurchases") &&
+                        !isActive("/approvePurchases")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      All Purchases
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/approvePurchases"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/approvePurchases")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      Approved
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/pendingPurchases"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/pendingPurchases")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      Pending
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
           {/* Pages Dropdown */}
           <div className="relative" ref={playlistsRef}>
             <button
@@ -242,6 +427,19 @@ const Header = () => {
               onClick={handlePlaylistsToggle}
             >
               <span className="ml-1">Pages</span>
+              <svg
+                className={`w-4 h-4 ml-1 transition-transform ${
+                  isPagesMenuOpen ? "rotate-180" : ""
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
             </button>
             {isPagesMenuOpen && (
               <div className="absolute left-0 mt-2 w-44 rounded-md shadow-lg bg-white z-50">
@@ -276,6 +474,19 @@ const Header = () => {
               onClick={handleDeviceToggle}
             >
               <span className="ml-1">Settings</span>
+              <svg
+                className={`w-4 h-4 ml-1 transition-transform ${
+                  isSettingMenuOpen ? "rotate-180" : ""
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
             </button>
             {isSettingMenuOpen && (
               <div className="absolute left-0 mt-2 w-52 rounded-md shadow-lg bg-white z-50">
@@ -336,29 +547,162 @@ const Header = () => {
           >
             Products
           </Link>
-          <Link
-            to="/orders"
-            className={`block px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
-              isActive("/orders")
-                ? "bg-blue-100 text-blue-800"
-                : "hover:bg-blue-50 hover:text-blue-900"
-            }`}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Orders
-          </Link>
-          <Link
-            to="/purchases"
-            className={`block px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
-              isActive("/purchases")
-                ? "bg-blue-100 text-blue-800"
-                : "hover:bg-blue-50 hover:text-blue-900"
-            }`}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Purchases
-          </Link>
-          <Link
+          {/* Orders Mobile Dropdown */}
+          <div ref={orderRef}>
+            <button
+              className="flex items-center w-full px-3 py-2 rounded text-base font-semibold transition-colors duration-150 hover:bg-blue-50"
+              onClick={handleOrderToggle}
+            >
+              Orders
+              <svg
+                className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                  isOrderMenuOpen ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </button>
+            {isOrderMenuOpen && (
+              <ul className="pl-4">
+                <li>
+                  <Link
+                    to="/orders"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/orders") &&
+                      !isActive("/pendingOrders") &&
+                      !isActive("/completeOrders")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsOrderMenuOpen(false);
+                    }}
+                  >
+                    All Orders
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/completeOrders"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/completeOrders")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsOrderMenuOpen(false);
+                    }}
+                  >
+                    Completed
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/pendingOrders"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/pendingOrders")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsOrderMenuOpen(false);
+                    }}
+                  >
+                    Pending
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Purchases Mobile Dropdown */}
+          <div ref={purchaseRef}>
+            <button
+              className="flex items-center w-full px-3 py-2 rounded text-base font-semibold transition-colors duration-150 hover:bg-blue-50"
+              onClick={handlePurchaseToggle}
+            >
+              Purchases
+              <svg
+                className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                  isPurchaseMenuOpen ? "rotate-180" : ""
+                }`}
+                aria-hidden="true"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </button>
+            {isPurchaseMenuOpen && (
+              <ul className="pl-4">
+                <li>
+                  <Link
+                    to="/purchases"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/purchases") &&
+                      !isActive("/pendingPurchases") &&
+                      !isActive("/approvePurchases")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsPurchaseMenuOpen(false);
+                    }}
+                  >
+                    All Purchases
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/approvePurchases"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/approvePurchases")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsPurchaseMenuOpen(false);
+                    }}
+                  >
+                    Approved
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/pendingPurchases"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/pendingPurchases")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsPurchaseMenuOpen(false);
+                    }}
+                  >
+                    Pending
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </div>
+          {/* <Link
             to="/quotations"
             className={`block px-3 py-2 rounded text-base font-semibold transition-colors duration-150 ${
               isActive("/quotations")
@@ -368,7 +712,7 @@ const Header = () => {
             onClick={() => setMobileMenuOpen(false)}
           >
             Quotations
-          </Link>
+          </Link> */}
           {/* Pages Dropdown */}
           <div ref={playlistsRef}>
             <button

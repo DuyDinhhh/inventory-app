@@ -1,8 +1,8 @@
 import httpAxios from "./httpAxios";
 
 const OrderService = {
-  index: async () => {
-    return await httpAxios.get(`order`);
+  index: async (page = 1) => {
+    return await httpAxios.get(`order?page=${page}`);
   },
   show: async (id) => {
     return await httpAxios.get(`order/${id}`);
@@ -10,14 +10,28 @@ const OrderService = {
   complete: async (id) => {
     return await httpAxios.put(`order/complete/${id}`);
   },
+  cancel: async (id) => {
+    return await httpAxios.put(`order/cancel/${id}`);
+  },
   store: async (data) => {
     return await httpAxios.post(`order/`, data);
   },
   update: async (id, data) => {
     return await httpAxios.post(`order/${id}`, data);
   },
-  delete: async (id) => {
+  destroy: async (id) => {
     return await httpAxios.delete(`order/${id}`);
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `order/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
+  },
+  pendingOrders: async (page = 1) => {
+    return await httpAxios.get(`order/pendingOrders?page=${page}`);
+  },
+  completeOrders: async (page = 1) => {
+    return await httpAxios.get(`order/completeOrders?page=${page}`);
   },
 };
 

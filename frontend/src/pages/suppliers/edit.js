@@ -279,21 +279,7 @@ const SupplierEdit = () => {
                     <div className="text-red-500 text-xs">{errors.type}</div>
                   )}
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="block mb-1 font-semibold text-sm">
-                    Address
-                  </label>
-                  <textarea
-                    className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
-                    name="address"
-                    value={form.address}
-                    onChange={handleChange}
-                    rows={2}
-                  />
-                  {errors.address && (
-                    <div className="text-red-500 text-xs">{errors.address}</div>
-                  )}
-                </div>
+
                 <div>
                   <label className="block mb-1 font-semibold text-sm">
                     Account Holder
@@ -342,12 +328,29 @@ const SupplierEdit = () => {
                     </div>
                   )}
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block mb-1 font-semibold text-sm">
+                    Address
+                  </label>
+                  <textarea
+                    className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
+                    rows={2}
+                  />
+                  {errors.address && (
+                    <div className="text-red-500 text-xs">{errors.address}</div>
+                  )}
+                </div>
               </div>
+
               {errors.general && (
                 <div className="px-6 text-red-500 text-sm">
                   {errors.general}
                 </div>
               )}
+
               <div className="flex justify-end gap-2 border-t border-blue-200 px-6 py-5">
                 <button
                   type="submit"

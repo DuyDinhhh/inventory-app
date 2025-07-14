@@ -1,11 +1,11 @@
 import httpAxios from "./httpAxios";
 
 const UserService = {
+  index: async (page = 1) => {
+    return await httpAxios.get(`user?page=${page}`);
+  },
   login: async (data) => {
     return await httpAxios.post("/login", data);
-  },
-  index: async () => {
-    return await httpAxios.get("user");
   },
   store: async (data) => {
     return await httpAxios.post("user", data);
@@ -21,6 +21,11 @@ const UserService = {
   },
   roles: async () => {
     return await httpAxios.get("roles");
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `user/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
   },
 };
 

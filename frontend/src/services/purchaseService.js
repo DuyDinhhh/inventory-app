@@ -1,8 +1,8 @@
 import httpAxios from "./httpAxios";
 
 const PurchaseService = {
-  index: async () => {
-    return await httpAxios.get("purchase");
+  index: async (page = 1) => {
+    return await httpAxios.get(`purchase?page=${page}`);
   },
   store: async (data) => {
     return await httpAxios.post("purchase", data);
@@ -18,6 +18,17 @@ const PurchaseService = {
   },
   destroy: async (id) => {
     return await httpAxios.delete(`purchase/${id}`);
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `purchase/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
+  },
+  pendingPurchases: async (page = 1) => {
+    return await httpAxios.get(`purchase/pendingPurchases?page=${page}`);
+  },
+  approvePurchases: async (page = 1) => {
+    return await httpAxios.get(`purchase/approvePurchases?page=${page}`);
   },
 };
 

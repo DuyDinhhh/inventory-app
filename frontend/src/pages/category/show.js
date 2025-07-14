@@ -87,6 +87,18 @@ const CategoryShow = () => {
                   <td className="py-2 px-4">{category.short_code ?? "-"}</td>
                 </tr>
                 <tr>
+                  <td className="py-2 px-4 font-medium">Created By</td>
+                  <td className="py-2 px-4">
+                    {category.created_by.name ?? "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-4 font-medium">Updated By</td>
+                  <td className="py-2 px-4">
+                    {category.updated_by.name ?? "-"}
+                  </td>
+                </tr>
+                <tr>
                   <td className="py-2 px-4 font-medium">Created At</td>
                   <td className="py-2 px-4">
                     {category.created_at

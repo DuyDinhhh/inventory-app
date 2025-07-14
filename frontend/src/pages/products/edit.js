@@ -22,7 +22,6 @@ const ProductEdit = () => {
     code: "",
     category_id: "",
     unit_id: "",
-    quantity: "",
     quantity_alert: "",
     buying_price: "",
     selling_price: "",
@@ -52,7 +51,6 @@ const ProductEdit = () => {
           code: prod.code || "",
           category_id: prod.category?.id || "",
           unit_id: prod.unit?.id || "",
-          quantity: prod.quantity || "",
           quantity_alert: prod.quantity_alert || "",
           buying_price: prod.buying_price || "",
           selling_price: prod.selling_price || "",
@@ -292,23 +290,7 @@ const ProductEdit = () => {
                     <div className="text-red-500 text-xs">{errors.unit_id}</div>
                   )}
                 </div>
-                <div>
-                  <label className="block mb-1 font-semibold text-sm">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    className="form-input w-full p-1  rounded-md border  border-blue-200 bg-blue-50 "
-                    name="quantity"
-                    value={form.quantity}
-                    onChange={handleChange}
-                  />
-                  {errors.quantity && (
-                    <div className="text-red-500 text-xs">
-                      {errors.quantity}
-                    </div>
-                  )}
-                </div>
+
                 <div>
                   <label className="block mb-1 font-semibold text-sm">
                     Quantity Alert

@@ -5,30 +5,87 @@ import { toast } from "react-toastify";
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
+  const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Fetch categories (with pagination and search)
+  const fetchCategories = async (_page = 1, searchTerm = "") => {
+    setLoading(true);
+    try {
+      let response;
+      if (searchTerm) {
+        response = await CategoryService.search(searchTerm, _page);
+      } else {
+        response = await CategoryService.index(_page);
+      }
+      setCategories(response.data);
+      setPagination({
+        current_page: response.current_page,
+        last_page: response.last_page,
+        per_page: response.per_page,
+        total: response.total,
+        from: response.from,
+        to: response.to,
+      });
+      setPage(_page);
+    } catch (err) {
+      setCategories([]);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await CategoryService.index();
-        setCategories(data);
-      } catch (err) {
-        setCategories([]);
-      }
-      setLoading(false);
-    })();
-  }, []);
+    fetchCategories(page, isSearching ? searchInput : "");
+    // eslint-disable-next-line
+  }, [page, isSearching]);
+
+  // Search handlers
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setIsSearching(true);
+    fetchCategories(1, searchInput);
+  };
+  const handleResetSearch = async () => {
+    setSearchInput("");
+    setIsSearching(false);
+    fetchCategories(1, "");
+  };
+
+  // Pagination controls
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= (pagination.last_page || 1))
+      setPage(newPage);
+  };
+
+  // Responsive pagination (show only a range of page numbers)
+  const getPageNumbers = () => {
+    const totalPages = pagination.last_page || 1;
+    const maxPagesToShow = 5;
+    let start = Math.max(1, page - Math.floor(maxPagesToShow / 2));
+    let end = start + maxPagesToShow - 1;
+    if (end > totalPages) {
+      end = totalPages;
+      start = Math.max(1, end - maxPagesToShow + 1);
+    }
+    const pageNumbers = [];
+    for (let i = start; i <= end; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers;
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this category?"))
       return;
     try {
       await CategoryService.destroy(id);
-      setCategories((prev) => prev.filter((item) => item.id !== id));
       toast.success("Category deleted successfully!", {
         autoClose: 800,
       });
+      fetchCategories(page, isSearching ? searchInput : "");
     } catch (error) {
       console.error("Failed to delete Category:", error);
       toast.error("Error deleting Category. Please try again.");
@@ -37,11 +94,40 @@ const Category = () => {
 
   return (
     <div className="container px-6 mx-auto grid">
-      <div className="flex justify-between items-center my-6">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center my-6">
         <h2 className="text-2xl font-semibold text-gray-700">Categories</h2>
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"
+        >
+          <input
+            type="text"
+            placeholder="Search by name or slug"
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded w-full sm:w-auto"
+            >
+              Search
+            </button>
+            {isSearching && (
+              <button
+                type="button"
+                onClick={handleResetSearch}
+                className="bg-gray-400 text-white px-4 py-2 rounded w-full sm:w-auto"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </form>
         <Link
           to="/category/create"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full md:w-auto"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +147,7 @@ const Category = () => {
         </Link>
       </div>
       <div className="w-full overflow-x-auto shadow-lg rounded-lg border border-blue-200">
-        <table className="w-full whitespace-no-wrap">
+        <table className="w-full min-w-[600px] whitespace-nowrap">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-left text-gray-700 uppercase border-b bg-blue-50">
               <th className="px-4 py-3">Name</th>
@@ -161,6 +247,43 @@ const Category = () => {
             )}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div className="flex flex-wrap justify-center items-center gap-2 my-4">
+        <button
+          onClick={() => handlePageChange((pagination.current_page || 1) - 1)}
+          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={(pagination.current_page || 1) <= 1}
+        >
+          Prev
+        </button>
+        {getPageNumbers().map((num) => (
+          <button
+            key={num}
+            onClick={() => handlePageChange(num)}
+            className={`px-3 py-1 rounded transition ${
+              (pagination.current_page || 1) === num
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {num}
+          </button>
+        ))}
+        <button
+          onClick={() => handlePageChange((pagination.current_page || 1) + 1)}
+          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={
+            (pagination.current_page || 1) >= (pagination.last_page || 1)
+          }
+        >
+          Next
+        </button>
+      </div>
+      <div className="text-center text-gray-600 text-xs">
+        Page {pagination.current_page || 1} of {pagination.last_page || 1} |
+        Showing {pagination.from || 0}-{pagination.to || 0} of{" "}
+        {pagination.total || 0} categories
       </div>
     </div>
   );

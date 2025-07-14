@@ -64,13 +64,8 @@ const UnitCreate = () => {
           </nav>
         </div>
         <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-          <form onSubmit={handleSubmit} autoComplete="off">
-            <div className="px-6 py-5 border-b border-blue-200">
-              <h3 className="text-lg font-semibold text-gray-700 m-0">
-                Unit Details
-              </h3>
-            </div>
-            <div className="p-6 grid grid-cols-1 gap-4">
+          <form onSubmit={handleSubmit} className="p-6" autoComplete="off">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 font-semibold text-sm">Name</label>
                 <input
@@ -78,12 +73,12 @@ const UnitCreate = () => {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  required
                 />
                 {errors.name && (
                   <div className="text-red-500 text-xs">{errors.name}</div>
                 )}
               </div>
+
               <div>
                 <label className="block mb-1 font-semibold text-sm">
                   Short Code
@@ -93,7 +88,6 @@ const UnitCreate = () => {
                   name="short_code"
                   value={form.short_code}
                   onChange={handleChange}
-                  required
                 />
                 {errors.short_code && (
                   <div className="text-red-500 text-xs">
@@ -103,9 +97,9 @@ const UnitCreate = () => {
               </div>
             </div>
             {errors.general && (
-              <div className="px-6 text-red-500 text-sm">{errors.general}</div>
+              <div className="pt-2 text-red-500 text-sm">{errors.general}</div>
             )}
-            <div className="flex justify-end gap-2 border-t border-blue-200 px-6 py-5">
+            <div className="flex justify-end gap-2 border-t border-blue-200 mt-6 pt-5">
               <button
                 type="submit"
                 disabled={saving}
@@ -114,7 +108,7 @@ const UnitCreate = () => {
                 {saving ? "Saving..." : "Save"}
               </button>
               <Link
-                to="/units"
+                to="/categories"
                 className="bg-blue-200 hover:bg-blue-300 text-gray-700 font-bold py-2 px-4 rounded flex items-center shadow"
               >
                 Cancel

@@ -1,27 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import UserService from "../../services/userService";
+import OrderService from "../../services/orderService";
 import { toast } from "react-toastify";
 
-const User = () => {
-  const [users, setUsers] = useState([]);
+const PendingOrder = () => {
+  const [orders, setOrders] = useState([]);
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  // Fetch users (all or search)
-  const fetchUsers = async (_page = 1, searchTerm = "") => {
+  // Fetch orders with pagination and search term
+  const fetchOrders = async (_page = 1, searchTerm = "") => {
     setLoading(true);
     try {
       let response;
+
       if (searchTerm) {
-        response = await UserService.search(searchTerm, _page);
+        response = await OrderService.search(searchTerm, _page);
       } else {
-        response = await UserService.index(_page);
+        response = await OrderService.pendingOrders(_page);
       }
-      setUsers(response.data);
+      setOrders(response.data);
       setPagination({
         current_page: response.current_page,
         last_page: response.last_page,
@@ -30,37 +31,48 @@ const User = () => {
         from: response.from,
         to: response.to,
       });
-      setPage(_page);
     } catch (err) {
-      setUsers([]);
+      setOrders([]);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchUsers(page, isSearching ? searchInput : "");
+    fetchOrders(page, isSearching ? searchInput : "");
     // eslint-disable-next-line
   }, [page, isSearching]);
 
-  // Search handlers
   const handleSearch = async (e) => {
     e.preventDefault();
     setIsSearching(true);
-    fetchUsers(1, searchInput);
+    fetchOrders(1, searchInput);
   };
+
   const handleResetSearch = async () => {
     setSearchInput("");
     setIsSearching(false);
-    fetchUsers(1, "");
+    fetchOrders(1, "");
   };
 
-  // Pagination controls
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this order?")) return;
+    try {
+      await OrderService.destroy(id);
+      setOrders((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Order deleted successfully!", { autoClose: 800 });
+    } catch (error) {
+      console.error("Failed to delete Order:", error);
+      toast.error("Error deleting Order. Please try again.");
+    }
+  };
+
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= (pagination.last_page || 1))
+    if (newPage >= 1 && newPage <= (pagination.last_page || 1)) {
       setPage(newPage);
+    }
   };
 
-  // Responsive pagination (show only a range of page numbers)
+  // Responsive pagination window
   const getPageNumbers = () => {
     const totalPages = pagination.last_page || 1;
     const maxPagesToShow = 5;
@@ -77,31 +89,18 @@ const User = () => {
     return pageNumbers;
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    try {
-      await UserService.destroy(id);
-      toast.success("User deleted successfully!", {
-        autoClose: 800,
-      });
-      fetchUsers(page, isSearching ? searchInput : "");
-    } catch (error) {
-      console.error("Failed to delete User:", error);
-      toast.error("Error deleting user. Please try again.");
-    }
-  };
-
   return (
-    <div className="container px-6 mx-auto grid">
+    <div className="container mx-auto px-2 sm:px-4 py-4">
+      {/* Header, search and create order button */}
       <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center my-6">
-        <h2 className="text-2xl font-semibold text-gray-700">Users</h2>
+        <h2 className="text-2xl font-semibold text-gray-700">Pending Orders</h2>
         <form
           onSubmit={handleSearch}
           className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"
         >
           <input
             type="text"
-            placeholder="Search by name, username, email"
+            placeholder="Search by invoice or customer"
             className="border px-3 py-2 rounded w-full sm:w-auto"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -125,8 +124,8 @@ const User = () => {
           </div>
         </form>
         <Link
-          to="/user/create"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full md:w-auto"
+          to="/orders/create"
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full md:w-auto"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -142,62 +141,80 @@ const User = () => {
               d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
             />
           </svg>
-          <span className="ml-2">Create User</span>
+          <span className="ml-2">Create Order</span>
         </Link>
       </div>
-      <div className="w-full overflow-x-auto shadow-lg rounded-lg border border-blue-200">
-        <table className="w-full min-w-[600px] whitespace-nowrap">
+
+      {/* Responsive table */}
+      <div className="w-full overflow-x-auto shadow-lg bg-blue-100 rounded-lg border border-blue-200">
+        <table className="w-full min-w-[650px] whitespace-nowrap rounded-lg">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-left text-gray-700 uppercase border-b bg-blue-50">
-              <th className="px-4 py-3">Photo</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Username</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Email Verified</th>
+              <th className="px-4 py-3">Invoice No.</th>
+              <th className="px-4 py-3">Customer</th>
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Payment</th>
+              <th className="px-4 py-3">Total</th>
+              <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-blue-50 divide-y">
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center py-8">
+                <td colSpan={7} className="text-center py-8">
                   Loading...
                 </td>
               </tr>
-            ) : users.length === 0 ? (
+            ) : orders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-8">
-                  No users found.
+                <td colSpan={7} className="text-center py-8">
+                  No orders found.
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
-                <tr key={user.id} className="text-gray-800">
-                  <td className="px-4 py-3">
-                    <img
-                      src={user.photo || "/assets/img/users/default.webp"}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full object-cover border border-blue-200"
-                    />
+              orders.map((order) => (
+                <tr key={order.id} className="text-gray-800">
+                  <td className="px-4 py-3 font-semibold">
+                    {order.invoice_no}
                   </td>
-                  <td className="px-4 py-3">{user.name}</td>
-                  <td className="px-4 py-3">{user.username}</td>
-                  <td className="px-4 py-3">{user.email}</td>
+                  <td className="px-4 py-3">{order.customer?.name ?? "-"}</td>
                   <td className="px-4 py-3">
-                    {user.email_verified_at ? (
-                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs">
-                        Not Verified
+                    {order.order_date
+                      ? new Date(order.order_date).toLocaleDateString()
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-3">{order.payment_type ?? "-"}</td>
+                  <td className="px-4 py-3">
+                    {order.total
+                      ? order.total.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "VND",
+                        })
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {order.order_status === 0 && (
+                      <span className="px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">
+                        Pending
                       </span>
                     )}
+                    {order.order_status === 1 && (
+                      <span className="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">
+                        Complete
+                      </span>
+                    )}
+                    {order.order_status === 2 && (
+                      <span className="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-700">
+                        Cancel
+                      </span>
+                    )}
+                    {[0, 1, 2].indexOf(order.order_status) === -1 && "-"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-row items-center gap-2">
                       <Link
-                        to={`/user/show/${user.id}`}
+                        to={`/orders/show/${order.id}`}
                         className="w-9 h-9 bg-blue-600 text-white hover:bg-blue-700 rounded-md flex items-center justify-center"
                         title="Show"
                       >
@@ -221,28 +238,8 @@ const User = () => {
                           />
                         </svg>
                       </Link>
-                      <Link
-                        to={`/user/edit/${user.id}`}
-                        className="w-9 h-9 bg-yellow-400 hover:bg-yellow-600 text-white rounded-md flex items-center justify-center"
-                        title="Edit"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="1.5"
-                          stroke="currentColor"
-                          className="w-5 h-5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                          />
-                        </svg>
-                      </Link>
                       <button
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => handleDelete(order.id)}
                         className="w-9 h-9 bg-red-500 text-white hover:bg-red-700 rounded-md flex items-center justify-center"
                         title="Delete"
                       >
@@ -269,7 +266,8 @@ const User = () => {
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
+
+      {/* Pagination Controls */}
       <div className="flex flex-wrap justify-center items-center gap-2 my-4">
         <button
           onClick={() => handlePageChange(page - 1)}
@@ -302,10 +300,10 @@ const User = () => {
       <div className="text-center text-gray-600 text-xs">
         Page {pagination.current_page || 1} of {pagination.last_page || 1} |
         Showing {pagination.from || 0}-{pagination.to || 0} of{" "}
-        {pagination.total || 0} users
+        {pagination.total || 0} orders
       </div>
     </div>
   );
 };
 
-export default User;
+export default PendingOrder;

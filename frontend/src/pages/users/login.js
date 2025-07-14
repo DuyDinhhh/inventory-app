@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import UserService from "../../services/userService";
-
+import { useUser } from "../../context/UserContext";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -10,6 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useUser();
 
   const handleChange = (e) => {
     setFormData({
@@ -29,14 +32,21 @@ const Login = () => {
         password: formData.password,
       });
 
+      console.log("login", response);
       // Store token and user data
       if (response.access_token || response.token) {
         localStorage.setItem("token", response.access_token || response.token);
-        if (response.user) {
-          localStorage.setItem("user", JSON.stringify(response.user));
-        }
-
-        navigate("/dashboards");
+        const decoded = jwtDecode(response.token);
+        const userId = decoded.sub;
+        // Optional: Fetch full user info if needed
+        const userInfo = await UserService.show(userId);
+        // Save user info
+        localStorage.setItem("user", JSON.stringify(userInfo));
+        setUser(userInfo);
+        toast.success("Login successfully!", {
+          autoClose: 700,
+          onClose: () => navigate("/dashboards"),
+        });
       } else {
         setError("Invalid response from server");
       }

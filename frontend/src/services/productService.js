@@ -2,8 +2,11 @@ import httpAxios from "./httpAxios";
 import axios from "axios";
 
 const ProductService = {
-  index: async () => {
-    return await httpAxios.get(`products`);
+  index: async (page = 1) => {
+    return await httpAxios.get(`product?page=${page}`);
+  },
+  list: async () => {
+    return await httpAxios.get("product/list");
   },
   show: async (id) => {
     return await httpAxios.get(`product/${id}`);
@@ -17,8 +20,17 @@ const ProductService = {
   destroy: async (id) => {
     return await httpAxios.delete(`product/${id}`);
   },
-  import: async (data) => {
-    return await httpAxios.post(`product/import`, data);
+
+  importPreview: async (data) => {
+    return await httpAxios.post(`product/import/preview`, data);
+  },
+  importConfirm: async (data) => {
+    return await httpAxios.post(`product/import/confirm`, data);
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `product/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
   },
 };
 export default ProductService;

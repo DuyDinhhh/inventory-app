@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import PurchaseService from "../../services/purchaseService";
-
+import { toast } from "react-toastify";
 const PurchaseShow = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,8 +31,13 @@ const PurchaseShow = () => {
 
   const handleApprove = async () => {
     try {
-      await PurchaseService.approve(purchase.id);
-      navigate("/purchases");
+      const respone = await PurchaseService.approve(purchase.id);
+      if (respone.status) {
+        toast.success("Purchase approved successfully!", {
+          autoClose: 500,
+          onClose: () => navigate("/purchases"),
+        });
+      }
     } catch (error) {
       console.error("Failed to approve purchase:", error);
     }
@@ -77,6 +82,14 @@ const PurchaseShow = () => {
               </h3>
             </div>
             <div className="flex items-center gap-4">
+              {purchase.created_by?.name && (
+                <div className="flex items-center gap-x-1 text-base text-gray-800">
+                  <span className="font-medium text-sm text-gray-700">
+                    Created by:
+                  </span>
+                  <span id="created_by">{purchase.created_by.name}</span>
+                </div>
+              )}
               <button
                 onClick={() => navigate("/purchases")}
                 className="bg-transparent border-0 text-2xl text-gray-400 hover:text-gray-700 cursor-pointer"

@@ -13,7 +13,6 @@ const CategoryEdit = () => {
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     name: "",
-    slug: "",
     short_code: "",
   });
 
@@ -25,7 +24,6 @@ const CategoryEdit = () => {
         setCategory(data);
         setForm({
           name: data.name || "",
-          slug: data.slug || "",
           short_code: data.short_code || "",
         });
       } catch (err) {
@@ -140,19 +138,7 @@ const CategoryEdit = () => {
                   <div className="text-red-500 text-xs">{errors.name}</div>
                 )}
               </div>
-              <div>
-                <label className="block mb-1 font-semibold text-sm">Slug</label>
-                <input
-                  className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
-                  name="slug"
-                  value={form.slug}
-                  onChange={handleChange}
-                  placeholder="(auto if left blank)"
-                />
-                {errors.slug && (
-                  <div className="text-red-500 text-xs">{errors.slug}</div>
-                )}
-              </div>
+
               <div>
                 <label className="block mb-1 font-semibold text-sm">
                   Short Code

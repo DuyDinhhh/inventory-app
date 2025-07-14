@@ -10,6 +10,8 @@ const UserCreate = () => {
     name: "",
     username: "",
     email: "",
+    password: "",
+    password_confirmation: "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(
@@ -81,8 +83,9 @@ const UserCreate = () => {
               className="underline text-blue-600 hover:text-blue-800"
             >
               Users
-            </Link>{" "}
-            &gt; Create
+            </Link>
+            {">"}
+            Create
           </nav>
         </div>
         <div className="flex flex-col md:flex-row gap-6 flex-wrap">
@@ -167,6 +170,40 @@ const UserCreate = () => {
                   />
                   {errors.email && (
                     <div className="text-red-500 text-xs">{errors.email}</div>
+                  )}
+                </div>
+                <div>
+                  <label className="block mb-1 font-semibold text-sm">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                  />
+                  {errors.password && (
+                    <div className="text-red-500 text-xs">
+                      {errors.password}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block mb-1 font-semibold text-sm">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
+                    name="password_confirmation"
+                    value={form.password_confirmation}
+                    onChange={handleChange}
+                  />
+                  {errors.password_confirmation && (
+                    <div className="text-red-500 text-xs">
+                      {errors.password_confirmation}
+                    </div>
                   )}
                 </div>
               </div>

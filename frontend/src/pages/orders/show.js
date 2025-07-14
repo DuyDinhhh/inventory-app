@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import OrderService from "../../services/orderService";
-
+import { toast } from "react-toastify";
 const OrderShow = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,10 +31,29 @@ const OrderShow = () => {
 
   const handleComplete = async () => {
     try {
-      await OrderService.complete(order.id);
-      navigate(`/orders`);
+      const respone = await OrderService.complete(order.id);
+      if (respone.status) {
+        toast.success("Order completed successfully!", {
+          autoClose: 500,
+          onClose: () => navigate("/orders"),
+        });
+      }
     } catch (error) {
       console.error("Failed to complete order:", error);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      const respone = await OrderService.cancel(order.id);
+      if (respone.status) {
+        toast.success("Order canceled successfully!", {
+          autoClose: 500,
+          onClose: () => navigate("/orders"),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
     }
   };
 
@@ -76,7 +95,16 @@ const OrderShow = () => {
                 Order Details
               </h3>
             </div>
+
             <div className="flex items-center gap-4">
+              {order.created_by?.name && (
+                <div className="flex items-center gap-x-1 text-base text-gray-800">
+                  <span className="font-medium text-sm text-gray-700">
+                    Created by:
+                  </span>
+                  <span id="created_by">{order.created_by.name}</span>
+                </div>
+              )}
               <button
                 onClick={() => navigate("/orders")}
                 className="bg-transparent border-0 text-2xl text-gray-400 hover:text-gray-700 cursor-pointer"
@@ -97,6 +125,7 @@ const OrderShow = () => {
                 >
                   Order Date
                 </label>
+
                 <input
                   type="text"
                   id="order_date"
@@ -285,18 +314,26 @@ const OrderShow = () => {
             </div>
             <div className="flex justify-end gap-2 border-t border-blue-200 px-6 py-5">
               {order.order_status === 0 && (
-                <button
-                  onClick={handleComplete}
-                  className="bg-green-400 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center shadow"
-                >
-                  Complete
-                </button>
+                <>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-red-400 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center shadow"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleComplete}
+                    className="bg-green-400 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center shadow"
+                  >
+                    Complete
+                  </button>
+                </>
               )}
               <Link
                 to="/orders"
                 className="bg-blue-200 hover:bg-blue-300 text-gray-700 font-bold py-2 px-4 rounded flex items-center shadow"
               >
-                Cancel
+                Back to orders
               </Link>
             </div>
           </div>

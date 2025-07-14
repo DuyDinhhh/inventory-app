@@ -124,6 +124,18 @@ const CustomerShow = () => {
                     <td className="py-2 px-4">{customer.bank_name}</td>
                   </tr>
                   <tr>
+                    <td className="py-2 px-4 font-medium">Created By</td>
+                    <td className="py-2 px-4">
+                      {customer.created_by.name ?? "-"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4 font-medium">Updated By</td>
+                    <td className="py-2 px-4">
+                      {customer.updated_by.name ?? "-"}
+                    </td>
+                  </tr>
+                  <tr>
                     <td className="py-2 px-4 font-medium">Created At</td>
                     <td className="py-2 px-4">
                       {new Date(customer.created_at).toLocaleString()}

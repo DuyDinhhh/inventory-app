@@ -1,8 +1,8 @@
 import httpAxios from "./httpAxios";
 
 const CustomerService = {
-  index: async () => {
-    return await httpAxios.get("customer");
+  index: async (page = 1) => {
+    return await httpAxios.get(`customer?page=${page}`);
   },
   store: async (data) => {
     return await httpAxios.post("customer", data);
@@ -15,6 +15,11 @@ const CustomerService = {
   },
   destroy: async (id) => {
     return await httpAxios.delete(`customer/${id}`);
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `customer/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
   },
 };
 

@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 const SupplierCreate = () => {
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -17,7 +16,6 @@ const SupplierCreate = () => {
     address: "",
     shopname: "",
     type: "",
-    photo: null,
     account_holder: "",
     account_number: "",
     bank_name: "",
@@ -79,14 +77,6 @@ const SupplierCreate = () => {
     }
     setSaving(false);
   };
-
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-6 min-h-[60vh] flex items-center justify-center">
-        <div className="text-xl text-center">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -223,21 +213,7 @@ const SupplierCreate = () => {
                     <div className="text-red-500 text-xs">{errors.type}</div>
                   )}
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="block mb-1 font-semibold text-sm">
-                    Address
-                  </label>
-                  <textarea
-                    className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
-                    name="address"
-                    value={form.address}
-                    onChange={handleChange}
-                    rows={2}
-                  />
-                  {errors.address && (
-                    <div className="text-red-500 text-xs">{errors.address}</div>
-                  )}
-                </div>
+
                 <div>
                   <label className="block mb-1 font-semibold text-sm">
                     Account Holder
@@ -284,6 +260,21 @@ const SupplierCreate = () => {
                     <div className="text-red-500 text-xs">
                       {errors.bank_name}
                     </div>
+                  )}
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block mb-1 font-semibold text-sm">
+                    Address
+                  </label>
+                  <textarea
+                    className="form-input w-full p-1 rounded-md border border-blue-200 bg-blue-50"
+                    name="address"
+                    value={form.address}
+                    onChange={handleChange}
+                    rows={2}
+                  />
+                  {errors.address && (
+                    <div className="text-red-500 text-xs">{errors.address}</div>
                   )}
                 </div>
               </div>

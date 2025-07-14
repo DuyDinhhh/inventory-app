@@ -65,11 +65,6 @@ const UnitShow = () => {
           </nav>
         </div>
         <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-          <div className="px-6 py-5 border-b border-blue-200">
-            <h3 className="text-lg font-semibold text-gray-700 m-0">
-              Unit Info
-            </h3>
-          </div>
           <div className="p-6">
             <table className="w-full table-auto text-sm text-gray-800">
               <tbody>
@@ -78,8 +73,28 @@ const UnitShow = () => {
                   <td className="py-2 px-4">{unit.name}</td>
                 </tr>
                 <tr>
+                  <td className="py-2 px-4 font-medium">Slug</td>
+                  <td className="py-2 px-4">{unit.slug}</td>
+                </tr>
+                <tr>
                   <td className="py-2 px-4 font-medium">Short Code</td>
-                  <td className="py-2 px-4">{unit.short_code}</td>
+                  <td className="py-2 px-4">{unit.short_code ?? "-"}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-4 font-medium">Created At</td>
+                  <td className="py-2 px-4">
+                    {unit.created_at
+                      ? new Date(unit.created_at).toLocaleString()
+                      : "-"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-4 font-medium">Updated At</td>
+                  <td className="py-2 px-4">
+                    {unit.updated_at
+                      ? new Date(unit.updated_at).toLocaleString()
+                      : "-"}
+                  </td>
                 </tr>
               </tbody>
             </table>

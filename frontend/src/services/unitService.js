@@ -1,8 +1,8 @@
 import httpAxios from "./httpAxios";
 
 const UnitService = {
-  index: async () => {
-    return await httpAxios.get("unit");
+  index: async (page = 1) => {
+    return await httpAxios.get(`unit?page=${page}`);
   },
   store: async (data) => {
     return await httpAxios.post("unit", data);
@@ -15,6 +15,11 @@ const UnitService = {
   },
   destroy: async (id) => {
     return await httpAxios.delete(`unit/${id}`);
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `unit/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
   },
 };
 

@@ -1,41 +1,84 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
+// import Modal from "react-modal";
 import ProductService, { exportProducts } from "../../services/productService";
 import { toast } from "react-toastify";
+import ProductImportPreviewModal from "../../components/productImportPreviewModal";
+
+// Modal.setAppElement("#root");
 
 const Product = () => {
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const data = await ProductService.index();
-        setProducts(data);
-      } catch (err) {
-        setProducts([]);
-      }
-      setLoading(false);
-    })();
-  }, []);
+  // Import preview states
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
+  // Fetch products (all or search)
+  const fetchProducts = async (_page = 1, searchTerm = "") => {
+    setLoading(true);
+    try {
+      let response;
+      if (searchTerm) {
+        response = await ProductService.search(searchTerm, _page);
+      } else {
+        response = await ProductService.index(_page);
+      }
+      setProducts(response.data);
+      setPagination({
+        current_page: response.current_page,
+        last_page: response.last_page,
+        per_page: response.per_page,
+        total: response.total,
+        from: response.from,
+        to: response.to,
+      });
+      setPage(_page);
+    } catch (err) {
+      setProducts([]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts(page, isSearching ? searchInput : "");
+    // eslint-disable-next-line
+  }, [page, isSearching]);
+
+  // Search handlers
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setIsSearching(true);
+    fetchProducts(1, searchInput);
+  };
+  const handleResetSearch = async () => {
+    setSearchInput("");
+    setIsSearching(false);
+    fetchProducts(1, "");
+  };
+
+  // Delete
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
     try {
       await ProductService.destroy(id);
-      setProducts((prev) => prev.filter((item) => item.id !== id));
-      toast.success("Product deleted successfully!", {
-        autoClose: 800,
-      });
+      toast.success("Product deleted successfully!", { autoClose: 800 });
+      fetchProducts(page, isSearching ? searchInput : "");
     } catch (error) {
       console.error("Failed to delete Product:", error);
       toast.error("Error deleting Product. Please try again.");
     }
   };
 
+  // Export
   const handleExport = async () => {
     try {
       const response = await exportProducts();
@@ -56,7 +99,7 @@ const Product = () => {
     }
   };
 
-  // Import handler
+  // Import - Step 1: Preview
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
@@ -64,113 +107,167 @@ const Product = () => {
   const handleImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setImportFile(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await ProductService.import(formData);
-      console.log("Import response:", response);
-
-      // Adjust according to your backend's response shape
-      if (response && response.message) {
-        toast.success(response.message);
-        const data = await ProductService.index();
-        setProducts(data);
-      } else if (response && response.error) {
-        toast.error(response.error);
-      } else {
-        toast.success("Products imported successfully!");
-        const data = await ProductService.index();
-        setProducts(data);
-      }
-    } catch (e) {
-      console.error("Import failed:", e);
-      if (e.response && e.response.data && e.response.data.error) {
-        toast.error(e.response.data.error);
-      } else {
-        toast.error("Failed to import products.");
-      }
+      const response = await ProductService.importPreview(formData); // POST /products/import/preview
+      setImportPreview(response);
+      setShowPreviewModal(true);
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Failed to preview import.");
     }
   };
 
+  // Import - Step 2: Confirm
+  const handleConfirmImport = async () => {
+    if (!importFile) return;
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    try {
+      console.log("test");
+      const response = await ProductService.importConfirm(formData); // POST /products/import/confirm
+      toast.success(response.message);
+      setShowPreviewModal(false);
+      setImportPreview(null);
+      setImportFile(null);
+      fetchProducts(page, isSearching ? searchInput : "");
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Failed to import products.");
+    }
+  };
+
+  // Pagination controls
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= (pagination.last_page || 1))
+      setPage(newPage);
+  };
+
+  // Responsive pagination (show only a range of page numbers)
+  const getPageNumbers = () => {
+    const totalPages = pagination.last_page || 1;
+    const maxPagesToShow = 5;
+    let start = Math.max(1, page - Math.floor(maxPagesToShow / 2));
+    let end = start + maxPagesToShow - 1;
+    if (end > totalPages) {
+      end = totalPages;
+      start = Math.max(1, end - maxPagesToShow + 1);
+    }
+    const pageNumbers = [];
+    for (let i = start; i <= end; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers;
+  };
+
   return (
-    <div className="container px-6 mx-auto grid">
-      <div className="flex justify-between items-center my-6">
+    <div className="container mx-auto px-2 sm:px-4 py-4">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center my-6">
         <h2 className="text-2xl font-semibold text-gray-700">Products</h2>
-        <div className="flex justify-between items-center my-6 flex-col sm:flex-row gap-4 sm:gap-0">
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"
+        >
+          <input
+            type="text"
+            placeholder="Search by name or code"
+            className="border px-3 py-2 rounded w-full sm:w-auto"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <div className="flex gap-2">
             <button
-              onClick={handleImportClick}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded w-full sm:w-auto"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 16v-8m0 8l-4-4m4 4l4-4M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M12 4v4"
-                />
-              </svg>
-              <span className="ml-2">Import</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xls,.xlsx"
-                style={{ display: "none" }}
-                onChange={handleImport}
-              />
+              Search
             </button>
-            <button
-              onClick={handleExport}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
+            {isSearching && (
+              <button
+                type="button"
+                onClick={handleResetSearch}
+                className="bg-gray-400 text-white px-4 py-2 rounded w-full sm:w-auto"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-                />
-              </svg>
-              <span className="ml-2">Export</span>
-            </button>
-            <Link
-              to="/product/create"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                />
-              </svg>
-              <span className="ml-2">Create Product</span>
-            </Link>
+                Reset
+              </button>
+            )}
           </div>
+        </form>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button
+            onClick={handleImportClick}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 16v-8m0 8l-4-4m4 4l4-4M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M12 4v4"
+              />
+            </svg>
+            <span className="ml-2">Import</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xls,.xlsx"
+              style={{ display: "none" }}
+              onChange={handleImport}
+            />
+          </button>
+          <button
+            onClick={handleExport}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+              />
+            </svg>
+            <span className="ml-2">Export</span>
+          </button>
+          <Link
+            to="/product/create"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            <span className="ml-2">Create Product</span>
+          </Link>
         </div>
       </div>
-      <div className="w-full overflow-x-auto shadow-lg rounded-lg border border-blue-200">
-        <table className="w-full whitespace-no-wrap">
+      <div className="w-full overflow-x-auto shadow rounded-lg border border-blue-200 bg-white">
+        <table className="w-full min-w-[600px] whitespace-nowrap">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-left text-gray-700 uppercase border-b bg-blue-50">
               <th className="px-4 py-3">Name</th>
@@ -198,7 +295,7 @@ const Product = () => {
               products.map((product) => (
                 <tr key={product.id} className="text-gray-800">
                   <td className="px-4 py-3">{product.name}</td>
-                  <td className="px-4 py-3 ">{product.code}</td>
+                  <td className="px-4 py-3">{product.code}</td>
                   <td className="px-4 py-3">{product.category?.name ?? "-"}</td>
                   <td className="px-4 py-3">{product.unit?.name ?? "-"}</td>
                   <td className="px-4 py-3">{product.quantity}</td>
@@ -277,6 +374,49 @@ const Product = () => {
           </tbody>
         </table>
       </div>
+      {/* Pagination */}
+      <div className="flex flex-wrap justify-center items-center gap-2 my-4">
+        <button
+          onClick={() => handlePageChange(page - 1)}
+          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={page <= 1}
+        >
+          Prev
+        </button>
+        {getPageNumbers().map((num) => (
+          <button
+            key={num}
+            onClick={() => handlePageChange(num)}
+            className={`px-3 py-1 rounded transition ${
+              page === num
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {num}
+          </button>
+        ))}
+        <button
+          onClick={() => handlePageChange(page + 1)}
+          className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={page >= (pagination.last_page || 1)}
+        >
+          Next
+        </button>
+      </div>
+      <div className="text-center text-gray-600 text-xs">
+        Page {pagination.current_page || 1} of {pagination.last_page || 1} |
+        Showing {pagination.from || 0}-{pagination.to || 0} of{" "}
+        {pagination.total || 0} products
+      </div>
+
+      {/* Import Preview Modal */}
+      <ProductImportPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        onConfirm={handleConfirmImport}
+        importPreview={importPreview}
+      />
     </div>
   );
 };

@@ -38,6 +38,10 @@ import UnitEdit from "../pages/unit/edit";
 import UserShow from "../pages/users/show";
 import UserEdit from "../pages/users/edit";
 import UserCreate from "../pages/users/create";
+import PendingOrder from "../pages/orders/pendingOrders";
+import CompleteOrder from "../pages/orders/completeOrders";
+import ApprovePurchase from "../pages/purchases/approvePurchases";
+import PendingPurchase from "../pages/purchases/pendingPurchases";
 
 const RouterAdmin = [
   { path: "/login", element: <Login /> },
@@ -64,12 +68,16 @@ const RouterAdmin = [
 
       // --- Orders ---
       { path: "/orders", element: <Order /> },
+      { path: "/pendingOrders", element: <PendingOrder /> },
+      { path: "/completeOrders", element: <CompleteOrder /> },
       { path: "/orders/create", element: <OrderCreate /> },
       { path: "/orders/show/:id", element: <OrderShow /> },
       { path: "/orders/edit/:id", element: <EditProduct /> },
 
       // --- Purchases ---
       { path: "/purchases", element: <Purchase /> },
+      { path: "/pendingPurchases", element: <PendingPurchase /> },
+      { path: "/approvePurchases", element: <ApprovePurchase /> },
       { path: "/purchase/create", element: <PurchaseCreate /> },
       { path: "/purchase/show/:id", element: <PurchaseShow /> },
       { path: "/purchase/edit/:id", element: <PurchaseUpdate /> },

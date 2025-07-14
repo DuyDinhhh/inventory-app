@@ -1,8 +1,8 @@
 import httpAxios from "./httpAxios";
 
 const CategoryService = {
-  index: async () => {
-    return await httpAxios.get("category");
+  index: async (page = 1) => {
+    return await httpAxios.get(`category?page=${page}`);
   },
   store: async (data) => {
     return await httpAxios.post("category", data);
@@ -15,6 +15,11 @@ const CategoryService = {
   },
   destroy: async (id) => {
     return await httpAxios.delete(`category/${id}`);
+  },
+  search: async (q, page = 1) => {
+    return await httpAxios.get(
+      `category/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
   },
 };
 

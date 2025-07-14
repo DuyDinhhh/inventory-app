@@ -112,7 +112,7 @@ const ProductShow = () => {
                     <td className="py-2 px-4">
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: product.barcode_svg || "",
+                          __html: product.barcode_html || "",
                         }}
                       />
                     </td>
