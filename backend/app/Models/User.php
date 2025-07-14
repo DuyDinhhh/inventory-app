@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -25,7 +27,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'username',
-        'photo'
+        'photo','created_by', 'updated_by'
     ];
     protected $primaryKey = 'id';
     protected $casts = [
@@ -64,7 +66,15 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->getKey();
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
     /**
      * Return an array with custom claims to be added to the JWT token.
      */

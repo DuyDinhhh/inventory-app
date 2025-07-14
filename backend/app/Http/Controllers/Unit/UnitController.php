@@ -6,22 +6,24 @@ use App\Models\Unit;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-
+use App\Http\Requests\Unit\StoreUnitRequest;
+use App\Http\Requests\Unit\UpdateUnitRequest;
 class UnitController extends Controller
 {
     public function index(Request $request)
     {
-        $units = Unit::all();
+        $units = Unit::with('createdBy','updatedBy')->orderBy('created_at','desc')->paginate(8);
         return response()->json($units);
     }
 
-    public function store(Request $request)
+    public function store(StoreUnitRequest $request)
     {
         $unit = new Unit();
 
         $unit->name = $request->name;
         $unit->slug = $request->slug ?? Str::slug($request->name);
         $unit->short_code = $request->short_code;
+        $unit->created_by = auth()->id();
 
         $unit->save();
 
@@ -35,21 +37,21 @@ class UnitController extends Controller
 
     public function show($id)
     {
-        $unit = Unit::find($id);
+        $unit = Unit::with('createdBy','updatedBy')->find($id);
         if (!$unit) {
             return response()->json(['error' => 'Unit not found'], 404);
         }
         return response()->json($unit);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateUnitRequest $request, $id)
     {
         $unit = Unit::findOrFail($id);
 
         $unit->name = $request->name;
         $unit->slug = $request->slug ?? Str::slug($request->name);
         $unit->short_code = $request->short_code;
-
+        $unit->updated_by = auth()->id();
         $unit->save();
 
         return response()->json([
@@ -69,4 +71,17 @@ class UnitController extends Controller
         $unit->delete();
         return response()->json(['message' => 'Unit deleted successfully']);
     }
+
+    public function search(Request $request)
+    {
+        $search = $request->query('q');  
+        $units = Unit::where(function ($query) use ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('slug', 'like', "%{$search}%");
+        })
+        ->orderBy('created_at', 'desc')
+        ->paginate(8);
+        return response()->json($units);
+    }
+    
 }

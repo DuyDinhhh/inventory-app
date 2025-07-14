@@ -4,13 +4,15 @@ namespace App\Models;
 use App\Enums\SupplierType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class Supplier extends Model
 {
     use HasFactory;
     protected $primaryKey = 'id';
     protected $fillable = [
         'id', 'name', 'email', 'phone', 'address', 'shopname', 'type',
-        'bank_name', 'account_holder', 'account_number', 'photo'
+        'bank_name', 'account_holder', 'account_number', 'photo','created_by', 'updated_by'
     ];
     protected $casts = [
         'created_at' => 'datetime',
@@ -22,7 +24,15 @@ class Supplier extends Model
     {
         return $this->hasMany(Purchase::class, 'supplier_id', 'id');
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
     public function scopeSearch($query, $value): void
     {
         $query->where('name', 'like', "%{$value}%")

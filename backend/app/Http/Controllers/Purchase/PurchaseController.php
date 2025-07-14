@@ -12,14 +12,14 @@ use App\Http\Requests\Purchase\UpdatePurchaseRequest;
 class PurchaseController extends Controller
 {
     public function index(){
-        $purchase = Purchase::with(['supplier', 'purchaseDetails'])
+        $purchase = Purchase::with(['supplier', 'purchaseDetails','createdBy','updatedBy'])
         ->orderBy("created_at","desc")
-        ->get();
+        ->paginate(8);
         return response()->json($purchase);
     }
 
     public function show($id){
-        $purchase = Purchase::with(['supplier', 'purchaseDetails','createdBy'])
+        $purchase = Purchase::with(['supplier', 'purchaseDetails','createdBy','updatedBy'])
         ->findOrFail($id);
         foreach ($purchase->purchaseDetails as $detail) {
             if ($detail->product && $detail->product->product_image) {
@@ -51,9 +51,8 @@ class PurchaseController extends Controller
                 $detail->unitcost = $item['unitcost'];
                 $detail->total = $item['total'];
                 $detail->save();
-
-                $product->quantity += $item['quantity'];
-                $product->save();
+                // $product->quantity += $item['quantity'];
+                // $product->save();
         }
         return response()->json(['success' => true, 'purchase_id' => $purchase->id]);
     }
@@ -62,16 +61,6 @@ class PurchaseController extends Controller
    
         $purchase = Purchase::with(['supplier', 'purchaseDetails','createdBy'])
         ->findOrFail($id); 
-        // Restore stock for previous purchase details
-        foreach ($purchase->purchaseDetails as $oldDetail) {
-            $product = Product::find($oldDetail->product_id);
-            if ($product) {
-                $product->quantity -= $oldDetail->quantity;
-                $product->save();
-            }
-        }
-        // Delete old purchase details
-        $purchase->purchaseDetails()->delete();
         // Update purchase main info
         $purchase->supplier_id = $request->supplier_id;
         $purchase->date = date('Y-m-d', strtotime($request->date));
@@ -92,8 +81,8 @@ class PurchaseController extends Controller
             $detail->total = $item['total'];
             $detail->save();
 
-            $product->quantity += $item['quantity'];
-            $product->save();
+            // $product->quantity += $item['quantity'];
+            // $product->save();
         }
 
         return response()->json(['success' => true, 'purchase_id' => $purchase->id]);
@@ -101,13 +90,22 @@ class PurchaseController extends Controller
 
 
     public function approve($id){
-        $purchase = Purchase::findOrFail($id); 
+        $purchase = Purchase::with('purchaseDetails')->findOrFail($id); 
         if (!$purchase) {
             return response()->json([
                 'status' => false,
                 'message' => 'Purchase not found',
             ], 404);
         }
+
+        foreach ($purchase->purchaseDetails as $detail) {
+            $product = Product::find($detail->product_id);
+            if ($product) {
+                $product->quantity += $detail->quantity;
+                $product->save();
+            }
+        }
+
         $purchase->status = 1;  
         $purchase->updated_at = date('Y-m-d H:i:s');
         $purchase->save();
@@ -116,6 +114,7 @@ class PurchaseController extends Controller
             'message' => 'Purchase has completed',
         ]);
     }
+
     public function destroy($id)
     {
         $purchase = Purchase::findOrFail($id); 
@@ -124,5 +123,21 @@ class PurchaseController extends Controller
         }
         $purchase->delete();
         return response()->json(['message' => 'Purchase deleted successfully']);
+    }
+
+
+    public function search(Request $request)
+    {
+        $search = $request->query('q');   
+        $purchases = Purchase::with('supplier')  // Include related supplier info
+            ->where(function ($query) use ($search) {
+                $query->where('purchase_no', 'like', "%{$search}%")
+                    ->orWhereHas('supplier', function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->paginate(10);  // Paginate the results
+
+        return response()->json($purchases);
     }
 }

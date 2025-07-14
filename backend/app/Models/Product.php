@@ -27,6 +27,8 @@ class Product extends Model
         'tax_type',
         'product_image',
         'notes',
+        'created_by',   
+        'updated_by',  
     ];
 
     protected $casts = [
@@ -80,5 +82,15 @@ class Product extends Model
     public function orderDetails(): HasMany
     {
         return $this->hasMany(OrderDetail::class, 'product_id', 'id');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

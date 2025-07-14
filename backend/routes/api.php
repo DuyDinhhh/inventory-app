@@ -10,7 +10,14 @@ use App\Http\Controllers\Product\ProductExportController;
 use App\Http\Controllers\Product\ProductImportController;
 
 use App\Http\Controllers\Order\OrderController;
+use App\Http\Controllers\Order\OrderCompleteController;
+use App\Http\Controllers\Order\OrderPendingController;
+
 use App\Http\Controllers\Purchase\PurchaseController;
+use App\Http\Controllers\Purchase\PurchaseApproveController;
+use App\Http\Controllers\Purchase\PurchasePendingController;
+
+
 use App\Http\Controllers\Supplier\SupplierController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Category\CategoryController;
@@ -23,8 +30,10 @@ Route::get('/', function () {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('product/export', [ProductExportController::class, 'export']);
-Route::post('product/import', [ProductImportController::class, 'import']);
+// Route::post('product/import', [ProductImportController::class, 'import']);
+
+Route::post('/product/import/preview', [ProductImportController::class, 'preview']);
+Route::post('/product/import/confirm', [ProductImportController::class, 'confirm']);
 Route::middleware('jwt')->group(function () {
     // Route::get('/user', [AuthController::class, 'getUser']);
     Route::put('/user', [AuthController::class, 'updateUser']);
@@ -32,19 +41,25 @@ Route::middleware('jwt')->group(function () {
 
     Route::get('/products', [ProductController::class, 'index']);
 
-
     Route::prefix('product')->group(function () {
+        Route::get('/search', [ProductController::class, 'search']);
         Route::post('/import', [ProductImportController::class, 'import']);
+        Route::get('/export', [ProductExportController::class, 'export']);
+        Route::get('/list', [ProductController::class, 'list']);
         Route::get('/', [ProductController::class, 'index']);
         Route::get('/{id}', [ProductController::class, 'show']);
         Route::post('/', [ProductController::class, 'store']);
         Route::post('/{id}', [ProductController::class, 'update']);
         Route::delete('/{id}', [ProductController::class, 'destroy']);
     });
-
+    
     Route::prefix('order')->group(function () {
+        Route::get('/search', [OrderController::class, 'search']);
         Route::get('/', [OrderController::class, 'index']);
+        Route::get('/pendingOrders', [OrderPendingController::class, 'pendingOrders']);
+        Route::get('/completeOrders', [OrderCompleteController::class, 'completeOrders']);
         Route::put('/complete/{id}', [OrderController::class, 'complete']);
+        Route::put('/cancel/{id}', [OrderController::class, 'cancel']);
         Route::get('/{id}', [OrderController::class, 'show']);
         Route::post('/', [OrderController::class, 'store']);
         Route::post('/{id}', [OrderController::class, 'update']);
@@ -52,7 +67,10 @@ Route::middleware('jwt')->group(function () {
     });
  
     Route::prefix('purchase')->group(function () {
+        Route::get('/search', [PurchaseController::class, 'search']);
         Route::get('/', [PurchaseController::class, 'index']);
+        Route::get('/approvePurchases', [PurchaseApproveController::class, 'approvePurchases']);
+        Route::get('/pendingPurchases', [PurchasePendingController::class, 'pendingPurchases']);
         Route::put('/approve/{id}', [PurchaseController::class, 'approve']);
         Route::get('/{id}', [PurchaseController::class, 'show']);
         Route::post('/', [PurchaseController::class, 'store']);
@@ -61,6 +79,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::prefix('supplier')->group(function () {
+        Route::get('/search', [SupplierController::class, 'search']);
         Route::get('/', [SupplierController::class, 'index']);
         Route::get('/{id}', [SupplierController::class, 'show']);
         Route::post('/', [SupplierController::class, 'store']);
@@ -69,6 +88,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::prefix('customer')->group(function () {
+        Route::get('/search', [CustomerController::class, 'search']);
         Route::get('/', [CustomerController::class, 'index']);
         Route::get('/{id}', [CustomerController::class, 'show']);
         Route::post('/', [CustomerController::class, 'store']);
@@ -77,6 +97,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::prefix('category')->group(function () {
+        Route::get('/search', [CategoryController::class, 'search']);
         Route::get('/', [CategoryController::class, 'index']);
         Route::get('/{id}', [CategoryController::class, 'show']);
         Route::post('/', [CategoryController::class, 'store']);
@@ -85,6 +106,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::prefix('unit')->group(function () {
+        Route::get('/search', [UnitController::class, 'search']);
         Route::get('/', [UnitController::class, 'index']);
         Route::get('/{id}', [UnitController::class, 'show']);
         Route::post('/', [UnitController::class, 'store']);
@@ -93,6 +115,7 @@ Route::middleware('jwt')->group(function () {
     });
 
     Route::prefix('user')->group(function () {
+        Route::get('/search', [UserController::class, 'search']);
         Route::get('/', [UserController::class, 'index']);
         Route::get('/{id}', [UserController::class, 'show']);
         Route::post('/', [UserController::class, 'store']);
@@ -100,6 +123,11 @@ Route::middleware('jwt')->group(function () {
         Route::delete('/{id}', [UserController::class, 'destroy']);
     });
 
-    Route::get('/dashboard', [DashboardController::class, 'index']);
- 
+    Route::prefix('/dashboard')->group(function () {
+        Route::get('/', [DashboardController::class, 'index']);
+        Route::get('/barchart', [DashboardController::class, 'barChartProductStock']);
+        Route::get('/saleTrendOverTime', [DashboardController::class, 'saleTrendOverTime']);
+        Route::get('/purchaseTrendOverTime', [DashboardController::class, 'purchaseTrendOverTime']);
+    });
+    
 });

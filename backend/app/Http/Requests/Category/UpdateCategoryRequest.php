@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\User;
+namespace App\Http\Requests\Category;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateUserRequest extends FormRequest
+class UpdateCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,11 +23,6 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:50',
-            'username' => 'required|string|max:50',
-            'email' => 'required|email|max:100',
-            'current_password' => 'required|string',
-            'password' => 'nullable|string|min:6|confirmed',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ];
     }
 }

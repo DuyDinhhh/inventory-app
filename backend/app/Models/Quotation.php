@@ -25,7 +25,8 @@ class Quotation extends Model
         'status',
         'note',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'created_by', 'updated_by'
     ];
 
     protected $casts = [
@@ -86,7 +87,15 @@ class Quotation extends Model
             set: fn ($value) => $value * 100,
         );
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 
     public function scopeSearch($query, $value): void
     {

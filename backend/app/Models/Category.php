@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ class Category extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'id', 'category_name'
+          'category_name','created_by', 'updated_by',
     ];
 
     protected $casts = [
@@ -25,6 +26,16 @@ class Category extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'category_id', 'id');
+    }
+    // Relationships for created_by and updated_by
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     // Scopes

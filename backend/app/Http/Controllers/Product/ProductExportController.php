@@ -19,7 +19,7 @@ class ProductExportController extends Controller
             'Category',
             'Unit',
             'Product Code',
-            'Stock',
+            'Quantity',
             'Buying Price',
             'Selling Price',
             'Tax',

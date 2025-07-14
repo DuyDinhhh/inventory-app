@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Order;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Order;
 use App\Models\Orderdetail;
-
+use App\Models\Order;
+use App\Enums\OrderStatus;
 use App\Models\Product;
 use App\Http\Requests\Order\StoreOrderRequest;
 
@@ -14,20 +14,23 @@ class OrderController extends Controller
 {
     public function index(Request $request){
 
-        $order = Order::with(['details', 'customer'])
+        $order = Order::with(['details', 'customer','createdBy','updatedBy'])
         ->orderBy("created_at","desc")
-        ->get();
+        ->paginate(8);
         return response()->json($order);
     }
 
+  
+
     public function complete($id){
-        $order = Order::findOrFail($id); 
+        $order = Order::with('details')->findOrFail($id); 
         if (!$order) {
             return response()->json([
                 'status' => false,
                 'message' => 'Order not found',
             ], 404);
         }
+        
         $order->order_status = 1;  
         $order->updated_at = date('Y-m-d H:i:s');
         $order->save();
@@ -37,9 +40,33 @@ class OrderController extends Controller
         ]);
     }
 
+    public function cancel($id){
+        $order = Order::findOrFail($id); 
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+        foreach ($order->details as $detail) {
+            $product = Product::find($detail->product_id);
+            if ($product) {
+                $product->quantity += $detail->quantity;
+                $product->save();
+            }
+        }
+        $order->order_status = 2;  
+        $order->updated_at = date('Y-m-d H:i:s');
+        $order->save();
+        return response()->json([
+            'status' => true,
+            'message' => 'Order has canceled',
+        ]);
+    } 
+
     public function show($id)
     {
-        $order = Order::with(['details', 'customer'])->find($id);
+        $order = Order::with(['details', 'customer','createdBy','updatedBy'])->find($id);
         if (!$order) {
             return response()->json(['error' => 'Order not found'], 404);
         }
@@ -88,7 +115,8 @@ class OrderController extends Controller
         $order->payment_type = $payment_type;
         $order->pay = $pay;
         $order->due = $due;
-        // $order->reference = $request->reference;
+        $order->created_by = auth()->id();
+
         $order->save();
         foreach ($request->products as $item) {
             $product = Product::findOrFail($item['product_id']);
@@ -99,11 +127,39 @@ class OrderController extends Controller
             $orderDetail->unitcost = $item['price'];
             $orderDetail->total = $item['quantity'] * $item['price'];
             $orderDetail->save();
-            // Optionally, decrease product stock
             $product->quantity -= $item['quantity'];
             $product->save();
         }
         // Optionally return the order
         return response()->json(['success' => true, 'order_id' => $order->id]);
     }
+    public function destroy($id)
+    {
+        $order = Order::find($id);
+        if (!$order) {
+            return response()->json(['error' => 'order not found'], 404);
+        }
+        $order->delete();
+        return response()->json(['message' => 'order deleted successfully']);
+    }
+
+    public function search(Request $request)
+    {
+        $search = $request->query('q'); 
+        \Log::debug($search);
+
+        // Search for orders based on invoice number or customer name
+        $orders = Order::with(['details', 'customer']) // Eager load the 'customer' relation
+            ->where(function ($query) use ($search) {
+                $query->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->paginate(10); // Paginate results, 10 per page
+
+        // Return the results as a JSON response
+        return response()->json($orders);
+    }
+
 }

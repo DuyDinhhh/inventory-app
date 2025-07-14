@@ -13,7 +13,7 @@ class Order extends Model
 
     protected $fillable = [
         'id', 'customer_id', 'order_date', 'order_status', 'total_products',
-        'sub_total', 'var', 'total', 'invoice_no', 'payment_type', 'pay', 'due'
+        'sub_total', 'var', 'total', 'invoice_no', 'payment_type', 'pay', 'due','created_by', 'updated_by'
     ];
     protected $casts = [
         'order_date'    => 'date',
@@ -27,6 +27,16 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+    
     public function details(): HasMany
     {
         return $this->hasMany(OrderDetail::class);

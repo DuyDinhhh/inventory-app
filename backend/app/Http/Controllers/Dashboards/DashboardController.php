@@ -33,4 +33,25 @@ class DashboardController extends Controller
             'total_purchases_today' => $totalPurchasesToday,
         ]);
     }
+    public function barChartProductStock(){
+        $products = Product::with(['category', 'unit','createdBy','updatedBy'])->orderBy('created_at','desc')->get();
+        foreach ($products as $product) {
+            if ($product->product_image) {
+                $product->product_image = asset('images/product/' . $product->product_image);
+            } else {
+                $product->product_image = null;
+            }
+        } 
+        return response()->json($products);
+    }
+
+    public function saleTrendOverTime(){
+        $orders = Order::with('details')->orderBy('created_at','desc')->get();
+        return response()->json($orders);
+    }
+
+    public function purchaseTrendOverTime(){
+        $purchases = Purchase::with('purchaseDetails')->orderBy('created_at','desc')->get();
+        return response()->json($purchases);
+    }
 }

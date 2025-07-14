@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class Unit extends Model
 {
     use HasFactory;
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'id', 'unit_name'
+        'id', 'unit_name','created_by', 'updated_by'
     ];
 
     protected $casts = [
@@ -29,7 +31,15 @@ class Unit extends Model
             ->orWhere('slug', 'like', "%{$value}%")
             ->orWhere('short_code', 'like', "%{$value}%");
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
     public function getRouteKeyName(): string
     {
         return 'slug';

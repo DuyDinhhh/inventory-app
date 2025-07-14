@@ -11,6 +11,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "phpoffice/phpspreadsheet": "^4.4",
+        "picqer/php-barcode-generator": "^3.2",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {
