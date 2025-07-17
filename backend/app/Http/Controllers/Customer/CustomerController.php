@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
+use App\Models\UserActivityLog;
 
 class CustomerController extends Controller
 {
@@ -44,9 +45,17 @@ class CustomerController extends Controller
             $file->move(public_path('images/customer'), $imageName);
             $customer->photo = $imageName;
         }
-
         $customer->save();
-
+        $this->logActivity(
+            auth()->id(),
+            'create',
+            [
+                'customer' => $customer->name,
+                'changes' => "Created a new customer: " . $customer->name,
+            ],
+            $customer->id,
+            Customer::class
+        );
         $customer->photo = $customer->photo ? asset('images/customer/' . $customer->photo) : null;
 
         return response()->json([
@@ -75,6 +84,8 @@ class CustomerController extends Controller
     {
         $customer = Customer::findOrFail($id);
 
+        $oldValues = $customer->getOriginal();
+        
         $customer->name = $request->name;
         $customer->email = $request->email;
         $customer->phone = $request->phone;
@@ -99,9 +110,20 @@ class CustomerController extends Controller
         }
 
         $customer->save();
+        $changes = UserActivityLog::logChanges($oldValues, $customer->getAttributes());
 
+        $this->logActivity(
+            auth()->id(),
+            'update',
+            [
+                'customer' => $customer->name,
+                'changes' => $changes,
+            ],
+            $customer->id,
+            Customer::class
+        );
         $customer->photo = $customer->photo ? asset('images/customer/' . $customer->photo) : null;
-
+        
         return response()->json([
             'success' => true,
             'status' => 'ok',
@@ -123,6 +145,16 @@ class CustomerController extends Controller
             }
         }
         $customer->delete();
+        $this->logActivity(
+            auth()->id(),
+            'delete',
+            [
+                'customer' => $customer->name,
+                'changes' => "Deleted customer: " . $customer->name,
+            ],
+            $customer->id,
+            Customer::class
+        );
         return response()->json(['message' => 'Customer deleted successfully']);
     }
 
@@ -135,14 +167,17 @@ class CustomerController extends Controller
          })
         ->orderBy('created_at', 'desc')
         ->paginate(8);
-    
-        \Log::debug($customers);
-        foreach ($customers as $customer) {
-            $customer->photo = $customer->photo 
-                ? asset('images/customer/' . $customer->photo) 
-                : null;
-        }
-    
         return response()->json($customers);
+    }
+
+    private function logActivity($userId, $action, array $details, $loggableId, $loggableType)
+    {
+        UserActivityLog::create([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => json_encode($details),
+            'loggable_id' => $loggableId,
+            'loggable_type' => $loggableType,
+        ]);
     }
 }

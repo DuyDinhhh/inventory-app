@@ -16,20 +16,23 @@ use App\Http\Controllers\Order\OrderPendingController;
 use App\Http\Controllers\Purchase\PurchaseController;
 use App\Http\Controllers\Purchase\PurchaseApproveController;
 use App\Http\Controllers\Purchase\PurchasePendingController;
-
+use App\Http\Controllers\Purchase\PurchaseExportController;
+use App\Http\Controllers\Purchase\PurchaseImportController;
 
 use App\Http\Controllers\Supplier\SupplierController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Category\CategoryController;
 use App\Http\Controllers\Unit\UnitController;
 use App\Http\Controllers\User\UserController;
-
+use App\Http\Controllers\UserActivityLogController;
 Route::get('/', function () {
     return response()->json(['message' => 'Hello world!']);
 });
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/log', [UserActivityLogController::class, 'log']);
+Route::get('/log/search', [UserActivityLogController::class, 'search']);
 // Route::post('product/import', [ProductImportController::class, 'import']);
 
 Route::post('/product/import/preview', [ProductImportController::class, 'preview']);
@@ -52,12 +55,15 @@ Route::middleware('jwt')->group(function () {
         Route::post('/{id}', [ProductController::class, 'update']);
         Route::delete('/{id}', [ProductController::class, 'destroy']);
     });
-    
+
     Route::prefix('order')->group(function () {
         Route::get('/search', [OrderController::class, 'search']);
         Route::get('/', [OrderController::class, 'index']);
         Route::get('/pendingOrders', [OrderPendingController::class, 'pendingOrders']);
         Route::get('/completeOrders', [OrderCompleteController::class, 'completeOrders']);
+        Route::get('/returnOrders', [OrderCompleteController::class, 'returnOrders']);
+
+        Route::put('/return/{id}', [OrderController::class, 'return']);
         Route::put('/complete/{id}', [OrderController::class, 'complete']);
         Route::put('/cancel/{id}', [OrderController::class, 'cancel']);
         Route::get('/{id}', [OrderController::class, 'show']);
@@ -68,6 +74,9 @@ Route::middleware('jwt')->group(function () {
  
     Route::prefix('purchase')->group(function () {
         Route::get('/search', [PurchaseController::class, 'search']);
+        Route::post('/import/preview', [PurchaseImportController::class, 'preview']);
+        Route::post('/import/confirm', [PurchaseImportController::class, 'confirm']);
+        Route::get('/export', [PurchaseExportController::class, 'export']);
         Route::get('/', [PurchaseController::class, 'index']);
         Route::get('/approvePurchases', [PurchaseApproveController::class, 'approvePurchases']);
         Route::get('/pendingPurchases', [PurchasePendingController::class, 'pendingPurchases']);
@@ -129,5 +138,7 @@ Route::middleware('jwt')->group(function () {
         Route::get('/saleTrendOverTime', [DashboardController::class, 'saleTrendOverTime']);
         Route::get('/purchaseTrendOverTime', [DashboardController::class, 'purchaseTrendOverTime']);
     });
-    
+   
+ 
+
 });

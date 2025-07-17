@@ -5,7 +5,7 @@ use App\Models\Purchase;
 use App\Enums\PurchaseStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use App\Models\UserActivityLog;
 class PurchaseApproveController extends Controller
 {
     public function approvePurchases(){

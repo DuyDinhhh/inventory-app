@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import PurchaseService from "../../services/purchaseService";
 import { toast } from "react-toastify";
+import PurchaseImportPreviewModal from "../../components/purchaseImportPreviewModal";
 
 const Purchase = () => {
   const [purchases, setPurchases] = useState([]);
@@ -10,6 +11,12 @@ const Purchase = () => {
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  // Import preview states
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Fetch purchases (all or search)
   const fetchPurchases = async (_page = 1, searchTerm = "") => {
@@ -41,6 +48,7 @@ const Purchase = () => {
     fetchPurchases(page, isSearching ? searchInput : "");
     // eslint-disable-next-line
   }, [page, isSearching]);
+
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= (pagination.last_page || 1)) {
       setPage(newPage);
@@ -70,6 +78,49 @@ const Purchase = () => {
     } catch (error) {
       console.error("Failed to delete purchase:", error);
       toast.error("Error deleting purchase. Please try again.");
+    }
+  };
+
+  // Import: Step 1 - Trigger file input
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Import: Step 2 - Preview
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportFile(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await PurchaseService.importPreview(formData);
+      setImportPreview(response);
+      setShowPreviewModal(true);
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Failed to preview import.");
+    }
+  };
+
+  // Import: Step 3 - Confirm
+  const handleConfirmImport = async () => {
+    if (!importFile) return;
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    try {
+      const response = await PurchaseService.importConfirm(formData); // POST /purchases/import/confirm
+      toast.success(response.message);
+      setShowPreviewModal(false);
+      setImportPreview(null);
+      setImportFile(null);
+      fetchPurchases(page, isSearching ? searchInput : "");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.error || "Failed to import purchases."
+      );
     }
   };
 
@@ -142,32 +193,61 @@ const Purchase = () => {
             )}
           </div>
         </form>
-        <Link
-          to="/purchase/create"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full md:w-auto"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="w-5 h-5"
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button
+            onClick={handleImportClick}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full sm:w-auto"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 16v-8m0 8l-4-4m4 4l4-4M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M12 4v4"
+              />
+            </svg>
+            <span className="ml-2">Import</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xls,.xlsx"
+              style={{ display: "none" }}
+              onChange={handleImport}
             />
-          </svg>
-          <span className="ml-2">Create Purchase</span>
-        </Link>
+          </button>
+
+          <Link
+            to="/purchase/create"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center w-full md:w-auto"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            <span className="ml-2">Create Purchase</span>
+          </Link>
+        </div>
       </div>
       <div className="w-full overflow-x-auto shadow-lg rounded-lg border border-blue-200 bg-blue-100">
         <table className="w-full min-w-[650px] whitespace-nowrap">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-left text-gray-700 uppercase border-b bg-blue-50">
-              {/* <th className="px-4 py-3">No.</th> */}
               <th className="px-4 py-3">Purchase No.</th>
               <th className="px-4 py-3">Supplier</th>
               <th className="px-4 py-3">Date</th>
@@ -192,7 +272,6 @@ const Purchase = () => {
             ) : (
               purchases.map((purchase, idx) => (
                 <tr key={purchase.id} className="text-gray-800">
-                  {/* <td className="px-4 py-3">{idx + 1}</td> */}
                   <td className="px-4 py-3 font-semibold">
                     {purchase.purchase_no}
                   </td>
@@ -302,6 +381,22 @@ const Purchase = () => {
         Showing {pagination.from || 0}-{pagination.to || 0} of{" "}
         {pagination.total || 0} purchases
       </div>
+
+      {/* Import Preview Modal */}
+      <PurchaseImportPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        onConfirm={handleConfirmImport}
+        importPreview={importPreview}
+      />
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xls,.xlsx"
+        style={{ display: "none" }}
+        onChange={handleImport}
+      />
     </div>
   );
 };

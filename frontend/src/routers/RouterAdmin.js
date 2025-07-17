@@ -42,6 +42,9 @@ import PendingOrder from "../pages/orders/pendingOrders";
 import CompleteOrder from "../pages/orders/completeOrders";
 import ApprovePurchase from "../pages/purchases/approvePurchases";
 import PendingPurchase from "../pages/purchases/pendingPurchases";
+import PrintOrder from "../pages/orders/print";
+import ReturnOrder from "../pages/orders/returnOrder";
+import ActivityLogs from "../pages/UserLog";
 
 const RouterAdmin = [
   { path: "/login", element: <Login /> },
@@ -59,6 +62,7 @@ const RouterAdmin = [
       { path: "", element: <Dashboard /> },
       { path: "/admin", element: <Dashboard /> },
       { path: "/dashboards", element: <Dashboard /> },
+      { path: "/log", element: <ActivityLogs /> },
 
       // --- Products ---
       { path: "/products", element: <Product /> },
@@ -70,7 +74,9 @@ const RouterAdmin = [
       { path: "/orders", element: <Order /> },
       { path: "/pendingOrders", element: <PendingOrder /> },
       { path: "/completeOrders", element: <CompleteOrder /> },
+      { path: "/returnOrders", element: <ReturnOrder /> },
       { path: "/orders/create", element: <OrderCreate /> },
+      { path: "/orders/print/:id", element: <PrintOrder /> },
       { path: "/orders/show/:id", element: <OrderShow /> },
       { path: "/orders/edit/:id", element: <EditProduct /> },
 

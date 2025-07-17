@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use Picqer\Barcode\BarcodeGeneratorHTML;
-
+use App\Models\UserActivityLog;
 
 class ProductController extends Controller
 {
@@ -57,8 +57,17 @@ class ProductController extends Controller
             $file->move(public_path('images/product'), $imageName);
             $product->product_image = $imageName;
         }
-
         $product->save();
+        $this->logActivity(
+            auth()->id(),
+            'create',
+            [
+                'product' => $product->name,
+                'changes' => "Created a new product: " . $product->name,
+            ],
+            $product->id,
+            Product::class
+        );
         return response()->json([
             'success' => true,
             'status' => 'ok',
@@ -90,7 +99,7 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, $id)
     {
         $product = Product::findOrFail($id);
-    
+        $oldValues = $product->getOriginal();
         $product->name = $request->name;
         $product->slug = $request->slug ?? \Str::slug($request->name);
         $product->code = $request->code;
@@ -121,6 +130,18 @@ class ProductController extends Controller
         }
 
         $product->save();
+        $changes = UserActivityLog::logChanges($oldValues, $product->getAttributes());
+
+        $this->logActivity(
+            auth()->id(),
+            'update',
+            [
+                'product' => $product->name,
+                'changes' => $changes,
+            ],
+            $product->id,
+            Product::class
+        );
         return response()->json([
             'success' => true,
             'status' => 'ok',
@@ -131,12 +152,30 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
+        try {
+            $product = Product::find($id);
+            if (!$product) {
+                return response()->json(['error' => 'Product not found'], 404);
+            }
+            $product->delete();
+ 
+
+            $this->logActivity(
+                auth()->id(),
+                'delete',
+                [
+                    'product' => $product->name,
+                    'changes' => "Deleted product: " . $product->name,
+                ],
+                $product->id,
+                Product::class
+            );
+            return response()->json(['message' => 'Product deleted successfully']);
         }
-        $product->delete();
-        return response()->json(['message' => 'Product deleted successfully']);
+        catch (Exception $e) {
+       
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
     public function search(Request $request)
@@ -158,5 +197,16 @@ class ProductController extends Controller
             }
         }
         return response()->json($products);
+    }
+
+    private function logActivity($userId, $action, array $details, $loggableId, $loggableType)
+    {
+        UserActivityLog::create([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => json_encode($details),
+            'loggable_id' => $loggableId,
+            'loggable_type' => $loggableType,
+        ]);
     }
 }

@@ -7,7 +7,7 @@ use App\Models\Product;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use Exception;
-
+use App\Models\UserActivityLog;
 class ProductExportController extends Controller
 {
     public function export()
@@ -57,7 +57,17 @@ class ProductExportController extends Controller
                 $product->notes,
             ];
         }
-        \Log::info('Exporting products', ['product_array' => $product_array]);
+        $this->logActivity(
+            auth()->id(),
+            'export',
+            [
+                'product' => $product->name,
+                'changes' => "Exported product list",
+            ],
+            $product->id,
+            Product::class
+        );
+ 
         return $this->downloadExcel($product_array);
     }
 
@@ -84,5 +94,16 @@ class ProductExportController extends Controller
             \Log::error($e);
             return response()->json(['error' => 'Failed to export products.'], 500);
         }
+    }
+
+    private function logActivity($userId, $action, array $details, $loggableId, $loggableType)
+    {
+        UserActivityLog::create([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => json_encode($details),
+            'loggable_id' => $loggableId,
+            'loggable_type' => $loggableType,
+        ]);
     }
 }

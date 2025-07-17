@@ -27,6 +27,14 @@ const UserService = {
       `user/search?q=${encodeURIComponent(q)}&page=${page}`
     );
   },
+  log: async (page = 1) => {
+    return await httpAxios.get(`log?page=${page}`);
+  },
+  searchLogs: async (q, page = 1) => {
+    return await httpAxios.get(
+      `log/search?q=${encodeURIComponent(q)}&page=${page}`
+    );
+  },
 };
 
 export default UserService;

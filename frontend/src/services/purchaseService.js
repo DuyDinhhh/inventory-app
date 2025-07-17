@@ -30,6 +30,12 @@ const PurchaseService = {
   approvePurchases: async (page = 1) => {
     return await httpAxios.get(`purchase/approvePurchases?page=${page}`);
   },
+  importPreview: async (data) => {
+    return await httpAxios.post(`purchase/import/preview`, data);
+  },
+  importConfirm: async (data) => {
+    return await httpAxios.post(`purchase/import/confirm`, data);
+  },
 };
 
 export default PurchaseService;

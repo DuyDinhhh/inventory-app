@@ -5,8 +5,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Customer extends Model
 {
+    use SoftDeletes;
     use HasFactory;
     protected $primaryKey = 'id';
 
@@ -23,25 +26,27 @@ class Customer extends Model
     {
         return $this->hasMany(Order::class, 'customer_id', 'id');
     }
+
+
+    protected static function booted()
+    {
+        parent::boot();
+        static::deleting(function ($customer){
+            if($customer->orders()->exists()){
+                throw new \Exception('This customer cannot be deleted cuz it is a part of an order.');
+            }
+        });
+    }
     public function quotations(): HasMany
     {
         return $this->HasMany(Quotation::class);
     }
-    // Relationships for created_by and updated_by
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    public function scopeSearch($query, $value): void
-    {
-        $query->where('name', 'like', "%{$value}%")
-            ->orWhere('email', 'like', "%{$value}%")
-            ->orWhere('phone', 'like', "%{$value}%");
     }
 }

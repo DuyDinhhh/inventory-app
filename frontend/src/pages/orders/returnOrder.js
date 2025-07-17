@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import OrderService from "../../services/orderService";
 import { toast } from "react-toastify";
 
-const Order = () => {
+const ReturnOrder = () => {
   const [orders, setOrders] = useState([]);
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const Order = () => {
       if (searchTerm) {
         response = await OrderService.search(searchTerm, _page);
       } else {
-        response = await OrderService.index(_page);
+        response = await OrderService.returnOrders(_page);
       }
       setOrders(response.data);
       setPagination({
@@ -93,7 +93,9 @@ const Order = () => {
     <div className="container mx-auto px-2 sm:px-4 py-4">
       {/* Header, search and create order button */}
       <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center my-6">
-        <h2 className="text-2xl font-semibold text-gray-700">Orders</h2>
+        <h2 className="text-2xl font-semibold text-gray-700">
+          Complete Orders
+        </h2>
         <form
           onSubmit={handleSearch}
           className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"
@@ -263,29 +265,6 @@ const Order = () => {
                           />
                         </svg>
                       </button>
-
-                      {order.order_status === 1 && (
-                        <Link
-                          to={`/orders/print/${order.id}`}
-                          className="w-9 h-9 bg-yellow-500 text-white hover:bg-yellow-700 rounded-md flex items-center justify-center"
-                          title="Print"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="size-6"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z"
-                            />
-                          </svg>
-                        </Link>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -295,7 +274,6 @@ const Order = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
       <div className="flex flex-wrap justify-center items-center gap-2 my-4">
         <button
           onClick={() => handlePageChange(page - 1)}
@@ -334,4 +312,4 @@ const Order = () => {
   );
 };
 
-export default Order;
+export default ReturnOrder;

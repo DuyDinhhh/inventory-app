@@ -13,6 +13,9 @@ const OrderService = {
   cancel: async (id) => {
     return await httpAxios.put(`order/cancel/${id}`);
   },
+  return: async (id) => {
+    return await httpAxios.put(`order/return/${id}`);
+  },
   store: async (data) => {
     return await httpAxios.post(`order/`, data);
   },
@@ -32,6 +35,9 @@ const OrderService = {
   },
   completeOrders: async (page = 1) => {
     return await httpAxios.get(`order/completeOrders?page=${page}`);
+  },
+  returnOrders: async (page = 1) => {
+    return await httpAxios.get(`order/returnOrders?page=${page}`);
   },
 };
 

@@ -5,7 +5,7 @@ use App\Models\Order;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use App\Models\UserActivityLog;
 class OrderPendingController extends Controller
 {
     public function pendingOrders(Request $request){

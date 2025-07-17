@@ -60,7 +60,6 @@ const Customer = () => {
       setPage(newPage);
   };
 
-  // Responsive pagination (show only a range of page numbers)
   const getPageNumbers = () => {
     const totalPages = pagination.last_page || 1;
     const maxPagesToShow = 5;

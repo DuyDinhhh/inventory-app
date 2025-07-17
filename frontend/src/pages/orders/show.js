@@ -57,6 +57,20 @@ const OrderShow = () => {
     }
   };
 
+  const handleReturn = async () => {
+    try {
+      const respone = await OrderService.return(order.id);
+      if (respone.status) {
+        toast.success("Order returned successfully!", {
+          autoClose: 500,
+          onClose: () => navigate("/orders"),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to return order:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -326,6 +340,16 @@ const OrderShow = () => {
                     className="bg-green-400 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center shadow"
                   >
                     Complete
+                  </button>
+                </>
+              )}
+              {order.order_status === 1 && (
+                <>
+                  <button
+                    onClick={handleReturn}
+                    className="bg-red-400 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center shadow"
+                  >
+                    Return
                   </button>
                 </>
               )}

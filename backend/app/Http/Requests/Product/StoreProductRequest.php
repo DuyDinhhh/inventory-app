@@ -26,7 +26,7 @@ class StoreProductRequest extends FormRequest
             'code' => 'required|string|max:20|unique:products,code',
             'category_id' => 'required|exists:categories,id',
             'unit_id' => 'required|exists:units,id',
-            'quantity_alert' => 'required|integer|min:0',
+            'quantity_alert' => 'nullable|integer|min:0',
             'buying_price' => 'required|integer|min:0',
             'selling_price' => 'required|integer|min:0',
             'tax' => 'nullable|numeric|between:0,99999999.99',

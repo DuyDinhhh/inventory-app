@@ -2,6 +2,7 @@
 
 namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Category extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $primaryKey = 'id';
 
@@ -26,6 +28,16 @@ class Category extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'category_id', 'id');
+    }
+ 
+ 
+    protected static function booted(){
+        parent::boot();
+        static::deleting(function($category){
+            if($category->products()->exists()){
+                throw new \Exception('This category cannot be deleted because it is a part of a product');
+            }
+        });
     }
     // Relationships for created_by and updated_by
     public function createdBy(): BelongsTo

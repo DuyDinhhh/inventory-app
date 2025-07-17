@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Unit extends Model
 {
+    use SoftDeletes;
     use HasFactory;
     protected $primaryKey = 'id';
 
@@ -25,12 +28,15 @@ class Unit extends Model
         return $this->hasMany(Product::class);
     }
 
-    public function scopeSearch($query, $value): void
-    {
-        $query->where('name', 'like', "%{$value}%")
-            ->orWhere('slug', 'like', "%{$value}%")
-            ->orWhere('short_code', 'like', "%{$value}%");
+    protected static function booted(){
+        parent::boot();
+        static::deleting(function($unit){
+            if($unit->products()->exists()){
+             throw new \Exception('This units cannot be deleted because it is a part of product.');
+            }
+        });
     }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

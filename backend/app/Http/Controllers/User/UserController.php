@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\User;
-
+use App\Models\UserActivityLog;
 use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -47,8 +47,17 @@ class UserController extends Controller
             $file->move(public_path('images/user'), $imageName);
             $user->photo = $imageName;
         }
-
         $user->save();
+        $this->logActivity(
+            auth()->id(),
+            'create',
+            [
+                'user' => $user->name,
+                'changes' => "Created a new user: " . $user->name,
+            ],
+            $user->id,
+            User::class
+        );
         $user->photo = $user->photo ? asset('images/user/' . $user->photo) : null;
         return response()->json([
             'success' => true,
@@ -78,7 +87,7 @@ class UserController extends Controller
     {            
 
         $user = User::findOrFail($id);
-        \Log::debug(Hash::check($request->current_password, $user->password));
+        $oldValues = $user->getOriginal();
 
         if (
             $request->filled('current_password') &&
@@ -113,6 +122,18 @@ class UserController extends Controller
         }
         $user->updated_by = auth()->id();
         $user->save();
+
+        $changes = UserActivityLog::logChanges($oldValues, $user->getAttributes());
+        $this->logActivity(
+            auth()->id(),
+            'update',
+            [
+                'user' => $user->name,
+                'changes' => $changes,
+            ],
+            $user->id,
+            User::class
+        );
         $user->photo = $user->photo ? asset('images/user/' . $user->photo) : null;
 
         return response()->json([
@@ -138,6 +159,16 @@ class UserController extends Controller
             }
         }
         $user->delete();
+        $this->logActivity(
+            auth()->id(),
+            'delete',
+            [
+                'user' => $user->name,
+                'changes' => "Deleted user: " . $user->name,
+            ],
+            $user->id,
+            User::class
+        );
         return response()->json(['message' => 'User deleted successfully']);
     }
     public function search(Request $request)
@@ -158,5 +189,15 @@ class UserController extends Controller
         }
     
         return response()->json($users);
+    }
+    private function logActivity($userId, $action, array $details, $loggableId, $loggableType)
+    {
+        UserActivityLog::create([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => json_encode($details),
+            'loggable_id' => $loggableId,
+            'loggable_type' => $loggableType,
+        ]);
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Supplier;
-
+use App\Models\UserActivityLog;
 use App\Models\Supplier;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -46,7 +46,16 @@ class SupplierController extends Controller
             $supplier->photo = $imageName;
         }
         $supplier->save();
-        // Adjust photo url for response
+        $this->logActivity(
+            auth()->id(),
+            'create',
+            [
+                'supplier' => $supplier->name,
+                'changes' => "Created a new supplier: " . $supplier->name,
+            ],
+            $supplier->id,
+            Supplier::class
+        );
         $supplier->photo = $supplier->photo ? asset('images/supplier/' . $supplier->photo) : null;
 
         return response()->json([
@@ -73,8 +82,8 @@ class SupplierController extends Controller
 
     public function update(UpdateSupplierRequest $request, $id)
     {
-        \Log::debug("Test");
         $supplier = Supplier::findOrFail($id);
+        $oldValues = $supplier->getOriginal();
 
         $supplier->name = $request->name;
         $supplier->email = $request->email;
@@ -103,7 +112,18 @@ class SupplierController extends Controller
         }
 
         $supplier->save();
+        $changes = UserActivityLog::logChanges($oldValues, $supplier->getAttributes());
 
+        $this->logActivity(
+            auth()->id(),
+            'update',
+            [
+                'supplier' => $supplier->name,
+                'changes' => $changes,
+            ],
+            $supplier->id,
+            Supplier::class
+        );
         $supplier->photo = $supplier->photo ? asset('images/supplier/' . $supplier->photo) : null;
 
         return response()->json([
@@ -129,6 +149,16 @@ class SupplierController extends Controller
         }
 
         $supplier->delete();
+        $this->logActivity(
+            auth()->id(),
+            'delete',
+            [
+                'supplier' => $supplier->name,
+                'changes' => "Deleted supplier: " . $supplier->name,
+            ],
+            $supplier->id,
+            Supplier::class
+        );
         return response()->json(['message' => 'Supplier deleted successfully']);
     }
 
@@ -150,5 +180,15 @@ class SupplierController extends Controller
         }
     
         return response()->json($suppliers);
+    }
+    private function logActivity($userId, $action, array $details, $loggableId, $loggableType)
+    {
+        UserActivityLog::create([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => json_encode($details),
+            'loggable_id' => $loggableId,
+            'loggable_type' => $loggableType,
+        ]);
     }
 }

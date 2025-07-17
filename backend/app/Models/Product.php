@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Attribute;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class Product extends Model
 {
+    use SoftDeletes;
     use HasFactory;
     protected $primaryKey = 'id';
 
@@ -92,5 +95,21 @@ class Product extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+
+    protected static function booted()
+    {
+        parent::boot();
+        static::deleting(function ($product) {
+            if ($product->orderDetails()->exists()) {
+                throw new \Exception('This product cannot be deleted because it is part of an order.');
+            }
+        });
+        static::deleting(function ($product) {
+            if ($product->purchaseDetails()->exists()) {
+                throw new \Exception('This product cannot be deleted because it is part of a purchase.');
+            }
+        });
     }
 }

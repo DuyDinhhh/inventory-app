@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Order extends Model
 {
+    use SoftDeletes;
     use HasFactory;
     protected $primaryKey = 'id';
 
@@ -16,12 +19,12 @@ class Order extends Model
         'sub_total', 'var', 'total', 'invoice_no', 'payment_type', 'pay', 'due','created_by', 'updated_by'
     ];
     protected $casts = [
-        'order_date'    => 'date',
+        'order_date' => 'datetime:Y-m-d H:i:s',
         'created_at'    => 'datetime',
         'updated_at'    => 'datetime',
         'order_status'  => OrderStatus::class
     ];
-
+    
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -47,5 +50,14 @@ class Order extends Model
         $query->where('invoice_no', 'like', "%{$value}%")
             ->orWhere('order_status', 'like', "%{$value}%")
             ->orWhere('payment_type', 'like', "%{$value}%");
+    }
+
+    protected static function booted()
+    {
+        parent::boot();
+
+        static::deleting(function ($order) {
+            $order->details()->delete();  
+        });
     }
 }

@@ -24,7 +24,7 @@ class StorePurchaseRequest extends FormRequest
         return [
             'date' => 'required|date',
             'supplier_id' => 'required|integer|exists:suppliers,id',
-            'purchase_no' => 'required|string|max:255',
+            'purchase_no' => 'required|string|max:255|unique:purchases,purchase_no',
             'total_amount' => 'required|numeric|min:0',
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|integer|exists:products,id',

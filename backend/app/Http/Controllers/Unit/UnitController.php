@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Unit;
-
+use App\Models\UserActivityLog;
 use App\Models\Unit;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -26,7 +26,16 @@ class UnitController extends Controller
         $unit->created_by = auth()->id();
 
         $unit->save();
-
+        $this->logActivity(
+            auth()->id(),
+            'create',
+            [
+                'unit' => $unit->name,
+                'changes' => "Created a new unit: " . $unit->name,
+            ],
+            $unit->id,
+            Unit::class
+        );
         return response()->json([
             'success' => true,
             'status' => 'ok',
@@ -47,13 +56,25 @@ class UnitController extends Controller
     public function update(UpdateUnitRequest $request, $id)
     {
         $unit = Unit::findOrFail($id);
+        $oldValues = $unit->getOriginal();
 
         $unit->name = $request->name;
         $unit->slug = $request->slug ?? Str::slug($request->name);
         $unit->short_code = $request->short_code;
         $unit->updated_by = auth()->id();
         $unit->save();
+        $changes = UserActivityLog::logChanges($oldValues, $unit->getAttributes());
 
+        $this->logActivity(
+            auth()->id(),
+            'update',
+            [
+                'unit' => $unit->name,
+                'changes' => $changes,
+            ],
+            $unit->id,
+            Unit::class
+        );
         return response()->json([
             'success' => true,
             'status' => 'ok',
@@ -69,6 +90,16 @@ class UnitController extends Controller
             return response()->json(['error' => 'Unit not found'], 404);
         }
         $unit->delete();
+        $this->logActivity(
+            auth()->id(),
+            'delete',
+            [
+                'unit' => $unit->name,
+                'changes' => "Deleted unit: " . $unit->name,
+            ],
+            $unit->id,
+            Unit::class
+        );
         return response()->json(['message' => 'Unit deleted successfully']);
     }
 
@@ -83,5 +114,15 @@ class UnitController extends Controller
         ->paginate(8);
         return response()->json($units);
     }
-    
+
+    private function logActivity($userId, $action, array $details, $loggableId, $loggableType)
+    {
+        UserActivityLog::create([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => json_encode($details),
+            'loggable_id' => $loggableId,
+            'loggable_type' => $loggableType,
+        ]);
+    } 
 }

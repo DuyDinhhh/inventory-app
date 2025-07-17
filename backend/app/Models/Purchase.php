@@ -5,11 +5,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Enums\PurchaseStatus;
 
 class Purchase extends Model
 {
+    use SoftDeletes;
     use HasFactory;
     protected $primaryKey = 'id';
     protected $fillable = [
@@ -49,5 +51,12 @@ class Purchase extends Model
         ;
     }
 
+    protected static function booted()
+    {
+        parent::boot();
 
+        static::deleting(function ($purchase) {
+            $purchase->purchaseDetails()->delete();  
+        });
+    }
 }

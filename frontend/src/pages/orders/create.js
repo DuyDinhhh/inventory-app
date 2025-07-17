@@ -189,9 +189,21 @@ const OrderCreate = () => {
         setErrors({ general: "Failed to create order" });
       }
     } catch (err) {
-      setErrors(
-        err.response?.data?.errors || { general: "Failed to create order" }
-      );
+      const response = err.response;
+
+      if (response?.status === 422 && response?.data?.out_of_stock) {
+        // Specific error: Out of stock
+        const outOfStock = response.data.out_of_stock
+          .map((p) => p.product_name || p.product_id)
+          .join(", ");
+        toast.error(`Some products are out of stock: ${outOfStock}`, {
+          autoClose: 5000,
+        });
+        setErrors({ out_of_stock: response.data.out_of_stock });
+      } else
+        setErrors(
+          err.response?.data?.errors || { general: "Failed to create order" }
+        );
     }
     setSaving(false);
   };
@@ -257,7 +269,7 @@ const OrderCreate = () => {
                 </label>
                 <input
                   name="date"
-                  type="date"
+                  type="datetime-local"
                   className="w-full border border-blue-200 rounded-md px-3 py-2 bg-blue-50 text-base"
                   value={form.date}
                   onChange={handleChange}

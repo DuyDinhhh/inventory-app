@@ -298,7 +298,7 @@ const Header = () => {
                           : ""
                       }`}
                     >
-                      All Orders
+                      All
                     </Link>
                   </li>
                   <li>
@@ -323,6 +323,18 @@ const Header = () => {
                       }`}
                     >
                       Pending
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/returnOrders"
+                      className={`block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700 ${
+                        isActive("/returnOrders")
+                          ? "font-semibold text-blue-600"
+                          : ""
+                      }`}
+                    >
+                      Return
                     </Link>
                   </li>
                 </ul>
@@ -386,7 +398,7 @@ const Header = () => {
                           : ""
                       }`}
                     >
-                      All Purchases
+                      All
                     </Link>
                   </li>
                   <li>
@@ -515,6 +527,14 @@ const Header = () => {
                       Units
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      to="/log"
+                      className="block px-4 py-2 text-base hover:bg-blue-50 hover:text-blue-700"
+                    >
+                      Logs
+                    </Link>
+                  </li>
                 </ul>
               </div>
             )}
@@ -586,7 +606,7 @@ const Header = () => {
                       setIsOrderMenuOpen(false);
                     }}
                   >
-                    All Orders
+                    All
                   </Link>
                 </li>
                 <li>
@@ -619,6 +639,22 @@ const Header = () => {
                     }}
                   >
                     Pending
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/returnOrders"
+                    className={`block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700 ${
+                      isActive("/returnOrders")
+                        ? "font-semibold text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsOrderMenuOpen(false);
+                    }}
+                  >
+                    Return
                   </Link>
                 </li>
               </ul>
@@ -664,7 +700,7 @@ const Header = () => {
                       setIsPurchaseMenuOpen(false);
                     }}
                   >
-                    All Purchases
+                    All
                   </Link>
                 </li>
                 <li>
@@ -822,6 +858,18 @@ const Header = () => {
                     }}
                   >
                     Units
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/log"
+                    className="block px-4 py-2 text-base font-medium hover:bg-blue-50 hover:text-blue-700"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsSettingMenuOpen(false);
+                    }}
+                  >
+                    Logs
                   </Link>
                 </li>
               </ul>
