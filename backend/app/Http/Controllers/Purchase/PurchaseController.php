@@ -11,6 +11,11 @@ use App\Http\Requests\Purchase\UpdatePurchaseRequest;
 use App\Models\UserActivityLog;
 class PurchaseController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('approve')->only(['approve']);
+    }
+
     public function index(){
         $purchase = Purchase::with(['supplier', 'purchaseDetails','createdBy','updatedBy'])
         ->orderBy("created_at","desc")

@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 
 class UserActivityLogController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('viewlog')->only(['log','search']);
+    }
+
     public function log(Request $request)
     {
         $log = UserActivityLog::with('user','loggable')->orderBy('created_at','desc')->paginate(8);

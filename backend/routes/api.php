@@ -31,13 +31,15 @@ Route::get('/', function () {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/log', [UserActivityLogController::class, 'log']);
-Route::get('/log/search', [UserActivityLogController::class, 'search']);
+
 // Route::post('product/import', [ProductImportController::class, 'import']);
 
 Route::post('/product/import/preview', [ProductImportController::class, 'preview']);
 Route::post('/product/import/confirm', [ProductImportController::class, 'confirm']);
 Route::middleware('jwt')->group(function () {
+    Route::get('/log', [UserActivityLogController::class, 'log']);
+    Route::get('/log/search', [UserActivityLogController::class, 'search']);
+
     // Route::get('/user', [AuthController::class, 'getUser']);
     Route::put('/user', [AuthController::class, 'updateUser']);
     Route::post('/logout', [AuthController::class, 'logout']);

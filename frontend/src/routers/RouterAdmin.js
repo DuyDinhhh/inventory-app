@@ -45,6 +45,7 @@ import PendingPurchase from "../pages/purchases/pendingPurchases";
 import PrintOrder from "../pages/orders/print";
 import ReturnOrder from "../pages/orders/returnOrder";
 import ActivityLogs from "../pages/UserLog";
+import Testbarcode from "../pages/TestBarcode";
 
 const RouterAdmin = [
   { path: "/login", element: <Login /> },
@@ -59,6 +60,7 @@ const RouterAdmin = [
     // ),
     element: <LayoutAdmin />,
     children: [
+      { path: "/test", element: <Testbarcode /> },
       { path: "", element: <Dashboard /> },
       { path: "/admin", element: <Dashboard /> },
       { path: "/dashboards", element: <Dashboard /> },

@@ -38,8 +38,12 @@ const PurchaseShow = () => {
           onClose: () => navigate("/purchases"),
         });
       }
-    } catch (error) {
-      console.error("Failed to approve purchase:", error);
+    } catch (err) {
+      console.log(err);
+      const errorMessage = err.response?.data?.message
+        ? err.response.data.message
+        : "Error approve purchase";
+      toast.error(errorMessage);
     }
   };
 

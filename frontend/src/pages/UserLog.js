@@ -41,7 +41,13 @@ const ActivityLogs = () => {
       });
       setPage(_page); // Always sync the page state after fetch
     } catch (err) {
-      toast.error("Error fetching logs");
+      console.log(err);
+      const errorMessage = err.response?.data?.message
+        ? err.response.data.message
+        : "Error fetching logs";
+
+      // Show the toast with the error message
+      toast.error(errorMessage);
     }
     setLoading(false);
   };

@@ -17,6 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
     
             // \Illuminate\Http\Middleware\HandleCors::class,
         ]);
+
+        $middleware->group('approve', [
+            \App\Http\Middleware\CanUserApprovePurchase::class,
+        ]);
+        $middleware->group('viewlog', [
+            \App\Http\Middleware\CanUserViewLog::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

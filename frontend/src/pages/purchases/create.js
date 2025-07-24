@@ -57,45 +57,82 @@ const PurchaseCreate = () => {
     }
   }, [productSearch, products]);
 
-  // Dropdown close on click outside
+  // Barcode scanning
+  const [barcode, setBarcode] = useState("");
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        searchRef.current &&
-        !searchRef.current.contains(event.target)
-      ) {
-        setDropdownOpen(false);
+    // Handles Keydown for Barcode Scanner
+    function handleKeyDown(e) {
+      if (e.key === "Enter") {
+        handleScan(barcode);
+        setBarcode("");
+      } else {
+        setBarcode((prev) => prev + e.key);
       }
-    };
-    if (dropdownOpen) {
-      window.addEventListener("mousedown", handleClickOutside);
     }
-    return () => window.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownOpen]);
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [barcode]);
+
+  const handleScan = (scannedBarcode) => {
+    console.log("Scanned Barcode:", scannedBarcode);
+
+    // Find the product with the matching barcode code
+    const foundProduct = products.find((prod) => prod.code === scannedBarcode);
+
+    if (foundProduct) {
+      handleAddProduct(foundProduct);
+    } else {
+      console.log("Product not found!");
+    }
+  };
+
+  const handleAddProduct = (product) => {
+    // Check if the product is already in the cart
+    const existingProductIndex = cart.findIndex(
+      (item) => item.product.id === product.id
+    );
+
+    if (existingProductIndex !== -1) {
+      // If the product is already in the cart, increase its quantity
+      setCart((prevCart) =>
+        prevCart.map((item, index) =>
+          index === existingProductIndex
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                total: (item.quantity + 1) * item.unitcost,
+              }
+            : item
+        )
+      );
+    } else {
+      // If the product is not in the cart, add it to the cart
+      setCart((prevCart) => [
+        ...prevCart,
+        {
+          product,
+          quantity: 1,
+          unitcost: product.buying_price || 0,
+          total: product.buying_price || 0,
+        },
+      ]);
+    }
+
+    setAlert("");
+    setDropdownOpen(false);
+    setProductSearch("");
+  };
 
   const handleChange = (e) => {
     setForm((f) => ({
       ...f,
       [e.target.name]: e.target.value,
     }));
-  };
-
-  const handleAddProduct = (product) => {
-    if (cart.some((item) => item.product.id === product.id)) return;
-    setCart((c) => [
-      ...c,
-      {
-        product,
-        quantity: 1,
-        unitcost: product.buying_price || 0,
-        total: product.buying_price || 0,
-      },
-    ]);
-    setAlert("");
-    setDropdownOpen(false);
-    setProductSearch("");
   };
 
   const handleCartChange = (idx, field, value) => {
@@ -152,7 +189,6 @@ const PurchaseCreate = () => {
         })),
       };
       const res = await PurchaseService.store(payload);
-      console.log(res);
       if (res && (res.success || res.status === "ok")) {
         toast.success("Purchase created successfully!", {
           autoClose: 700,
@@ -176,6 +212,7 @@ const PurchaseCreate = () => {
       </div>
     );
   }
+
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-5xl mx-auto px-6">
@@ -215,16 +252,6 @@ const PurchaseCreate = () => {
               <h3 className="text-xl font-semibold text-gray-700 m-0">
                 Purchase Information
               </h3>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => navigate("/purchases")}
-                  className="bg-transparent border-0 text-2xl text-gray-400 hover:text-gray-700 cursor-pointer"
-                  title="Close"
-                >
-                  ×
-                </button>
-              </div>
             </div>
             <div className="p-6 flex flex-wrap gap-6">
               <div className="flex-1 min-w-[180px]">
@@ -327,6 +354,7 @@ const PurchaseCreate = () => {
                 </div>
               </div>
             </div>
+
             {/* Cart Table */}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-base">
@@ -334,6 +362,9 @@ const PurchaseCreate = () => {
                   <tr>
                     <th className="py-2 px-3 border-b-2 border-blue-200 text-center font-semibold">
                       Product
+                    </th>
+                    <th className="py-2 px-3 border-b-2 border-blue-200 text-center font-semibold">
+                      Photo
                     </th>
                     <th className="py-2 px-3 border-b-2 border-blue-200 text-center font-semibold">
                       Net Unit Cost
@@ -362,6 +393,19 @@ const PurchaseCreate = () => {
                           <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs">
                             {item.product.code}
                           </span>
+                        </td>
+                        <td className="text-center py-2 px-3 align-middle">
+                          <div className="max-w-[80px] max-h-[80px] mx-auto">
+                            <img
+                              src={
+                                item.product.product_image
+                                  ? item.product.product_image
+                                  : "/assets/img/products/default.webp"
+                              }
+                              alt={item.product?.name || ""}
+                              className="max-w-[80px] max-h-[80px] rounded object-contain bg-white border border-gray-200 block"
+                            />
+                          </div>
                         </td>
                         <td className="align-middle text-center">
                           <input
@@ -442,6 +486,7 @@ const PurchaseCreate = () => {
               </div>
             </div>
           </div>
+
           {/* Submit */}
           <div className="text-end">
             <button

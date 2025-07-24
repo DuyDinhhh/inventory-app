@@ -25,6 +25,8 @@ class UserController extends Controller
                 $user->photo = null;
             }
         }
+
+        \Log::debug(auth()->user()->role->role_name);
         return response()->json($users);
     }
 
