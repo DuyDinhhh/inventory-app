@@ -12,9 +12,8 @@ class CreateRolesTable extends Migration
         Schema::create('roles', function (Blueprint $table) {
             $table->id('role_id'); // primary key for roles
             $table->string('role_name');
-            $table->string('permission_name');
+            $table->string('permission_name')->unique();
             $table->text('description')->nullable();
-            $table->primary(['role_id', 'permission_name']); // composite primary key
             $table->timestamps();
         });
          
