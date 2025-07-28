@@ -7,6 +7,9 @@ const UserService = {
   login: async (data) => {
     return await httpAxios.post("/login", data);
   },
+  register: async (data) => {
+    return await httpAxios.post("/register", data);
+  },
   store: async (data) => {
     return await httpAxios.post("user", data);
   },
