@@ -23,12 +23,16 @@ class CreateProductsTable extends Migration
             $table->string('product_image', 100)->nullable();
             $table->unsignedBigInteger('category_id');
             $table->unsignedBigInteger('unit_id');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('restrict');
-            $table->foreign('unit_id')->references('id')->on('units')->onDelete('restrict');
-       
+            $table->foreign('unit_id')->references('id')->on('units')->onDelete('restrict'); 
+             // Add foreign key relationships (assuming you have a 'users' table)
+             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 

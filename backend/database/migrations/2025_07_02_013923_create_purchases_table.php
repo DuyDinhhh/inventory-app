@@ -15,7 +15,7 @@ class CreatePurchasesTable extends Migration
             $table->string('purchase_no', 20)->unique();
             $table->string('status', 20);
             $table->integer('total_amount');
-            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->softDeletes();
             $table->timestamps();

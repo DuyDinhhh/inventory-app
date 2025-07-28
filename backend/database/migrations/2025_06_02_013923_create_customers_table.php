@@ -18,8 +18,15 @@ class CreateCustomersTable extends Migration
             $table->string('account_holder', 50)->nullable();
             $table->string('account_number', 50)->nullable();
             $table->string('bank_name', 50)->nullable();
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->softDeletes();
             $table->timestamps();
+      
+
+            // Add foreign key constraints
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 
