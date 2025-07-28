@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->unsignedBigInteger('role_id')->nullable();  
             $table->foreign('role_id')->references('role_id')->on('roles')->onDelete('set null');  // foreign key constraint
+            $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
         });

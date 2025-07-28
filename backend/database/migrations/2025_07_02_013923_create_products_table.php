@@ -23,9 +23,8 @@ class CreateProductsTable extends Migration
             $table->string('product_image', 100)->nullable();
             $table->unsignedBigInteger('category_id');
             $table->unsignedBigInteger('unit_id');
+            $table->softDeletes();
             $table->timestamps();
-
-           
 
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('restrict');
             $table->foreign('unit_id')->references('id')->on('units')->onDelete('restrict');

@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('action'); // Action performed (e.g., 'create', 'update', 'delete')
             $table->text('details'); // Details about the action (old/new values)
             $table->morphs('loggable'); // Polymorphic relationship to any model (e.g., Category, Product)
+            $table->softDeletes();
             $table->timestamps(); // Created_at and updated_at fields
         });
     }

@@ -13,6 +13,7 @@ class CreateUnitsTable extends Migration
             $table->string('name', 50);
             $table->string('slug', 50)->unique();
             $table->string('short_code', 20)->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

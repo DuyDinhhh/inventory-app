@@ -21,6 +21,7 @@ class CreateOrdersTable extends Migration
             $table->string('payment_type', 20);
             $table->integer('pay');
             $table->integer('due');
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('restrict');

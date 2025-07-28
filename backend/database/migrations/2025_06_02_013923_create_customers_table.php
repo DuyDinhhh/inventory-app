@@ -18,6 +18,7 @@ class CreateCustomersTable extends Migration
             $table->string('account_holder', 50)->nullable();
             $table->string('account_number', 50)->nullable();
             $table->string('bank_name', 50)->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

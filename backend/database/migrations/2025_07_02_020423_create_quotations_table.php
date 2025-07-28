@@ -22,6 +22,7 @@ class CreateQuotationsTable extends Migration
             $table->integer('total_amount');
             $table->string('status', 20);
             $table->text('note')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('restrict');

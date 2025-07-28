@@ -15,6 +15,7 @@ class CreateOrderDetailsTable extends Migration
             $table->integer('quantity');
             $table->integer('unitcost');
             $table->integer('total');
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');

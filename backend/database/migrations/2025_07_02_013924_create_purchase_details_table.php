@@ -15,6 +15,7 @@ class CreatePurchaseDetailsTable extends Migration
             $table->integer('quantity');
             $table->integer('unitcost');
             $table->integer('total');
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('purchase_id')->references('id')->on('purchases')->onDelete('cascade');

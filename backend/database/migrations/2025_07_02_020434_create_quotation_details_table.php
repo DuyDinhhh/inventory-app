@@ -21,6 +21,7 @@ class CreateQuotationDetailsTable extends Migration
             $table->integer('product_discount_amount')->nullable();
             $table->string('product_discount_type', 20)->nullable();
             $table->integer('product_tax_amount')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('quotation_id')->references('id')->on('quotations')->onDelete('cascade');
